@@ -6,9 +6,15 @@
 #include <std_msgs/msg/String.hpp>
 #include <std_msgs/msg/int32.hpp>
 
-class LinearActuator : public rclcpp::Node{
-public:
-    LinearActuator() : Node("linear_actuator_node"){
-        actuator_left_sensor_sub_=this->create_subscription<std_msgs::msg::Int32
-    }
+// class LinearActuator : public rclcpp::Node{
+// public:
+//     LinearActuator() : Node("linear_actuator_node"){
+//         actuator_left_sensor_sub_=this->create_subscription<std_msgs::msg::Int32
+//     }
+// }
+
+int main(int argc, char **argv){
+    rclcpp::init(argc, argv);
+    rclcpp::shutdown();
+    return 0;
 }
