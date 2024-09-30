@@ -12,6 +12,12 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(my_custom_service REQUIRED)
 
+# Include the directory where your custom library is located
+include_directories(
+  include/Adafruit-PWM-Servo-Driver-Library-master
+  include/Adafruit_VL53L0X-master
+)
+
 # Add WiringPi
 find_library(WIRINGPI_LIB wiringPi REQUIRED)
 
