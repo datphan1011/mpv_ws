@@ -1,0 +1,9 @@
+string command                  # The user command (e.g., "LOAD", "UNLOAD")
+int32 left_sensor_data          # Request the height sensor data (e.g., 1500 mm)
+int32 right_sensor_data         # Request the height sensor data (e.g., 1500 mm)
+---
+string response_command         # Server response to the use command
+int32 response_left_sensor      # Server response to the left sensor data
+int32 response_right_sensor     # Server response to the right sensor data
+bool success
+string message
