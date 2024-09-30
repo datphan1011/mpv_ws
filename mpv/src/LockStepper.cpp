@@ -18,20 +18,31 @@ public:
     }
 private:
     // Subscriptions for limit switches
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr left_lock_state_pub_;
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr right_lock_state_pub_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr left_lock_state_sub_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr right_lock_state_sub_;
     //Publisher for limit switches
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr left_locker_pub_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr right_locker_pub_;
     // Call back function
-    void left_state_callback(const std_msgs::msgs::Bool::SharedPtr msg){
-        // TODO: Add the logic of this function
-        if (msg->data == false){
-            RCLCPP_INFO(this->get_logger(), "left limit switch is open");
+    void left_state_callback(const std_msgs::msg::Bool::SharedPtr msg){
+        if (msg->data == false) {
+            RCLCPP_INFO(this->get_logger(), "Left limit switch is unlocked");
+            // You can add logic here to lock it if needed
+            lock_limit_switches();  // Lock after unlock is detected
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Left limit switch is locked");
+            unlock_limit_switches(); // Unlock after lock is detected
         }
     }
-    void right_state_callback(const std_msgs::msgs::Bool::SharedPtr msg){
-        // TODO: Add the logic of this function
+    void right_state_callback(const std_msgs::msg::Bool::SharedPtr msg){
+            if (msg->data == false) {
+            RCLCPP_INFO(this->get_logger(), "Right limit switch is unlocked");
+            // You can add logic here to lock it if needed
+            lock_limit_switches();  // Lock after unlock is detected
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Right limit switch is locked");
+            unlock_limit_switches();  // Unlock after lock is detected
+        }
     }
     // this function sent a message to both of the locker to unlock their lock 
     void unlock_limit_switches(){
@@ -55,7 +66,7 @@ private:
 
         RCLCPP_INFO(this->get_logger(), "Lock commands sent to both limit switches");
     }
-}
+};
 
 int main(int argc, char **argv){
     rclcpp::init(argc, argv);
