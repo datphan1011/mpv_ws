@@ -7,9 +7,9 @@ public:
     LockStepper() : Node("lock_stepper_node"){
         // Subscriptions for limit switches
         left_lock_state_sub_ = this->create_subscription<std_msgs::msg::Bool>(
-        "left_limit_switch", 10,std::bind(&LockStepper::left_state_callback,this, std::placeholders::_1));
+        "limit_switch1", 10,std::bind(&LockStepper::left_state_callback,this, std::placeholders::_1));
         right_lock_state_sub_= this->create_subscription<std_msgs::msg::Bool>(
-        "right_limit_switch", 10, std::bind(&LockStepper::right_state_callback, this, std::placeholders::_1));
+        "limit_switch2", 10, std::bind(&LockStepper::right_state_callback, this, std::placeholders::_1));
         // Publishers to unlock the limit switches
         left_locker_pub_ = this->create_publisher<std_msgs::msg::Bool>(
         "left_unlock", 10);
