@@ -27,7 +27,7 @@ private:
     void left_state_callback(const std_msgs::msgs::Bool::SharedPtr msg){
         // TODO: Add the logic of this function
         if (msg->data == false){
-            RCLCPP_INFO(this->get_logger(), "")
+            RCLCPP_INFO(this->get_logger(), "left limit switch is open");
         }
     }
     void right_state_callback(const std_msgs::msgs::Bool::SharedPtr msg){
