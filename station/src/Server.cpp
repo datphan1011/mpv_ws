@@ -9,7 +9,6 @@ public:
         // Create a service that listens for incoming service requests
         service_ = this->create_service<my_custom_service::srv::MPVAndStation>(
             "server_service", std::bind(&Server::handle_service, this, std::placeholders::_1, std::placeholders::_2));
-
         // Publisher to send messages on a topic (command and sensor data)
         pub_control_ = this->create_publisher<std_msgs::msg::String>("control", 10);
         pub_left_sensor_ = this->create_publisher<std_msgs::msg::Int32>("left_sensor", 10);
