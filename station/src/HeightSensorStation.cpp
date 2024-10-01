@@ -1,23 +1,23 @@
-#include "rclcpp/rclcpp.hpp"  // ROS2 C++ client library
+#include "rclcpp/rclcpp.hpp"    // ROS2 C++ client library
 #include "std_msgs/msg/int32.hpp"  // ROS2 message type
-#include "wiringPiI2C.h" // WiringPi for I2C communication
-#include <wiringPi.h>  // WiringPi for GPIO control
-// #include <VL53L0X.h>
-#include <chrono>  // For time handling
-#include <memory>  // For smart pointers
-#include <iostream> 
+#include "wiringPiI2C.h"        // WiringPi for I2C communication
+#include <wiringPi.h>           // WiringPi for GPIO control
+#include <chrono>               // For time handling
+#include <memory>               // For smart pointers
+#include <iostream>             // Standard cpp library
 
 
 class HeightSensorStation : public rclcpp::Node{
     public:
         HeightSensorStation() : Node("vl53l1x_node_publisher"){
+            // Initialize the left and right sensor publisher
             left_sensor_publisher_=this->create_publisher<std_msgs::msg::Int32>("left_sensor_data", 10);
             right_sensor_publisher_=this->create_publisher<std_msgs::msg::Int32>("right_sensor_data", 10);
             height_sensor_timer_=this->create_wall_timer(std::chrono::milliseconds(200), std::bind(&HeightSensorStation::timer_callback, this));
 
             // Initialize GPIO pins for shutdown
             wiringPiSetupGpio();
-
+            // Left and right sensor pin
             left_sensor_shudown_pin = 23; // GPIO23
             right_sensor_shudown_pin = 24; // GPIO24
             // Configure GPIO as an output
@@ -28,6 +28,7 @@ class HeightSensorStation : public rclcpp::Node{
             digitalWrite(left_sensor_shudown_pin, LOW);   
             digitalWrite(right_sensor_shudown_pin, LOW);
             usleep(100000); // 100 ms
+            
             // Initialize first sensor
             digitalWrite(left_sensor_shudown_pin, HIGH);
             usleep(100000); // 100 ms
