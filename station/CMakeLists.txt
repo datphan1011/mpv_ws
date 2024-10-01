@@ -13,12 +13,12 @@ find_package(std_srvs REQUIRED)
 find_package(my_custom_service REQUIRED)
 
 # Include the directory where your custom library is located
-include_directories(
-  ${CMAKE_SOURCE_DIR}/include/Adafruit-PWM-Servo-Driver-Library-master
-  ${CMAKE_SOURCE_DIR}/include/Adafruit_VL53L0X-master
-  ${CMAKE_SOURCE_DIR}/include/Adafruit_BusIO-master
-  ${CMAKE_SOURCE_DIR}/include/ArduinoCore-avr-master
-)
+# include_directories(
+#   ${CMAKE_SOURCE_DIR}/include/Adafruit-PWM-Servo-Driver-Library-master
+#   ${CMAKE_SOURCE_DIR}/include/Adafruit_VL53L0X-master
+#   ${CMAKE_SOURCE_DIR}/include/Adafruit_BusIO-master
+#   ${CMAKE_SOURCE_DIR}/include/ArduinoCore-avr-master
+# )
 
 # Add WiringPi
 find_library(WIRINGPI_LIB wiringPi REQUIRED)
