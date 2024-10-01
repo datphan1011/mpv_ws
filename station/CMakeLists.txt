@@ -14,8 +14,10 @@ find_package(my_custom_service REQUIRED)
 
 # Include the directory where your custom library is located
 include_directories(
-  include/Adafruit-PWM-Servo-Driver-Library-master
-  include/Adafruit_VL53L0X-master
+  ${CMAKE_SOURCE_DIR}/include/Adafruit-PWM-Servo-Driver-Library-master
+  ${CMAKE_SOURCE_DIR}/include/Adafruit_VL53L0X-master
+  ${CMAKE_SOURCE_DIR}/include/Adafruit_BusIO-master
+  ${CMAKE_SOURCE_DIR}/include/ArduinoCore-avr-master
 )
 
 # Add WiringPi
@@ -35,6 +37,7 @@ ament_target_dependencies(gripper_node rclcpp std_msgs)
 
 # Link WiringPi library to the executable
 target_link_libraries(height_sensor_node ${WIRINGPI_LIB})
+target_link_libraries(gripper_node ${WIRINGPI_LIB})
 
 # Install rules
 install(TARGETS
