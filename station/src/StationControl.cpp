@@ -15,38 +15,87 @@ public:
         
         // Publisher to the /station_control topic
         station_control_pub_ = this->create_publisher<std_msgs::msg::String>("station_control", 10);
-        
-        // Timer to publish data periodically
-        timer_ = this->create_wall_timer(std::chrono::seconds(1), std::bind(&StationControl::send_data, this));
     }
 
 private:
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr station_control_sub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr station_control_pub_;
-    rclcpp::TimerBase::SharedPtr timer_;
     std::string last_command_; // Store the last received command
 
     // Callback function to handle incoming messages on /control topic
     void control_callback(const std_msgs::msg::String::SharedPtr msg) {
-        last_command_ = msg->data; // Update last command with received message
-        RCLCPP_INFO(this->get_logger(), "Command Received from MPV: %s", msg->data.c_str());
-        // Check for "UNLOAD" command and publish "HEIGHT"
-        if (last_command_ == "UNLOAD") {
-            auto response_msg = std_msgs::msg::String();
-            response_msg.data = "HEIGHT";
-            station_control_pub_->publish(response_msg);
-            RCLCPP_INFO(this->get_logger(), "Station responding with HEIGHT");
+        last_command_ = msg->data;  //update the lastest command with the receive messages
+        RCLCPP_INFO(this->get_logger(), "Command received from MPV. %s", msg->data.c_str());
+        // Check the message from the MPV 
+        // Switch-case can't not be use for string so use if-else  
+        if(last_command_ == "UNLOAD"){  
+            perform_unload_task();  // call the matching function
+        }
+        else if(last_command_ == "LOAD"){
+            perform_load_task();    // call the matching function
+        }
+        else if(last_command_ == "INITIAL_POSE"){
+            perform_initial_pose_task();    // call the matching function
+        }
+        else if(last_command_ == "LOCKIN"){
+            // Function will be implement later
+            // perform_lockin_task();
+        }
+        else if(last_command_ == "LOCKOUT"){
+            // Function will be implement later
+            // perform_lockout_task();
+        }
+        else if(last_command_ == "HEIGHT"){
+            perform_height_task();
+        }
+        else if(last_command_ == "QUIT"){
+            RCLCPP_INFO(this->get_logger(), "The station has been shutdown");
+            rclcpp::shutdown();
         }
     }
+    // Do unload task
+    void perform_unload_task(){
+        send_message("HEIGHT");     // Send HEIGHT to the /station_control topic
+        std::this_thread::sleep_for(std::chrono::seconds(5));  // delay 5 seconds for each messages
+        send_message("UNLOAD");  // Send UNLOAD to the /station_control topic
+        RCLCPP_INFO(this->get_logger(), "UNLOAD task completed");   // Print out on the console
+    }
+    // Do load task
+    void perform_load_task(){
+        send_message("HEIGHT");     // Send HEIGHT to the /station_control topic
+        std::this_thread::sleep_for(std::chrono::seconds(5));   // delay 5 seconds for each messages
+        send_message("GRI_UN");     // Send GRI_UN to the /station_control topic
+        std::this_thread::sleep_for(std::chrono::seconds(5));   // delay 5 seconds for each messages
+        send_message("LOAD");       // Send LOAD to the /station_control topic
+        RCLCPP_INFO(this->get_logger(), "LOAD task completed"); // Print out on the console
+    }
+    // Do initial position task
+    void perform_initial_pose_task(){
+        send_message("HEIGHT");     // Send HEIGHT to the /station_control topic
+        std::this_thread::sleep_for(std::chrono::seconds(5));   // delay for 5 seconds for each messages
+        send_message("INITIAL_POSE");// Send INITIAL_POSE to the /station_control topic
+        RCLCPP_INFO(this->get_logger(), "INITIAL_POSE task completed"); // Print out on the console
+    }
+    /*Do lockin task
+    void perform_lockin_task(){
+    }*/
 
-    // Function to publish data to the /station_control topic
-    void send_data() {
-        if (!last_command_.empty()) { // Ensure there's a command to process
-            auto message = std_msgs::msg::String();
-            message.data = "Station processing command: " + last_command_; // Add a space after the colon
-            station_control_pub_->publish(message);
-            RCLCPP_INFO(this->get_logger(), "Station sending data: %s", message.data.c_str());
-        }
+    /*Do lockout task
+    void perform_lockout_task(){
+    }*/
+   
+    // Do HEIGHT task
+    void perform_height_task(){
+        send_message("HEIGHT");
+        std::this_thread::sleep_for(std::chrono::seconds(5));   // delay for 5 seconds for each messages
+        RCLCPP_INFO(this->get_logger(), "HEIGHT task completed");
+    }   
+    // Function to publish message to the /station_control topic
+    void send_message(const std::string &data) {
+        auto message = std_msgs::msg::String();     // Create a string message variable
+        message.data = data;                        // add the data field of the data argument to the message data
+        station_control_pub_->publish(message);     // Publish the message to the /station_control topic
+        RCLCPP_INFO(this->get_logger(), "Published message: %s", message.data.c_str()); // print the message to the console
     }
 };
 
