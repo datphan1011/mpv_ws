@@ -22,6 +22,8 @@ find_package(my_custom_service REQUIRED)
 
 # Add WiringPi
 find_library(WIRINGPI_LIB wiringPi REQUIRED)
+find_library(PIGPIOD_LIB pigpio REQUIRED)
+find_library(PIGPIOD_IF2_LIB pigpiod_if2 REQUIRED)
 
 # Specify the source files for the node
 add_executable(height_sensor_node src/HeightSensorStation.cpp)
@@ -39,7 +41,7 @@ ament_target_dependencies(limitswitch_station_node rclcpp std_msgs)
 
 # Link WiringPi library to the executable
 target_link_libraries(height_sensor_node ${WIRINGPI_LIB})
-target_link_libraries(gripper_node ${WIRINGPI_LIB})
+target_link_libraries(gripper_node ${PIGPIOD_LIB})
 target_link_libraries(limitswitch_station_node ${WIRINGPI_LIB})
 
 # Install rules
