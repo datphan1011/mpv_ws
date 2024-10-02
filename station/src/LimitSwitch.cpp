@@ -1,9 +1,10 @@
 #include "rclcpp/rclcpp.hpp"    // ROS2 C++ client library
 #include "std_msgs/msg/bool.hpp"  // ROS2 message type for Boolean messages
-#include <wiringPi.h>           // WiringPi library for GPIO control
+// #include <wiringPi.h>           // WiringPi library for GPIO control
 #include <chrono>               // For time handling
 #include <memory>               // For smart pointers
 #include <iostream>             // Standard cpp library
+#include <pigpio.h>             // pigpio library for GPIO control, replace WiringPi
 
 class LimitSwitch : public rclcpp::Node{
 public:
@@ -15,17 +16,21 @@ public:
         "limitswitch_state_end", 10);
         // Create a timer for the publisher to publish the signal 
         limitswitch_timer_ = this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&LimitSwitch::timer_callback, this));
-        // initialize the wiringPi library
-        wiringPiSetupGpio();
+        // Initialize the pigpio library
+        if (gpioInitialise() < 0) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio library");
+            return;
+        }
         // Initialize GPIO pins
-        pinMode(limitswitch_pin_start_, INPUT);
-        pinMode(limitswitch_pin_end_, INPUT);
+        gpioSetMode(limitswitch_pin_start_, PI_INPUT);
+        gpioSetMode(limitswitch_pin_end_, PI_INPUT);
         // Enable pull-up resistors for both switches
-        pullUpDnControl(limitswitch_pin_start_, PUD_UP);
-        pullUpDnControl(limitswitch_pin_end_, PUD_UP);
+        gpioSetPullUpDown(limitswitch_pin_start_, PI_PUD_UP);
+        gpioSetPullUpDown(limitswitch_pin_end_, PI_PUD_UP);
     }
     ~LimitSwitch(){
         reset();
+        gpioTerminate();
     }
 private:
     // Class member variables
@@ -53,13 +58,13 @@ private:
     }
     // Function to get the current state of a switch 
     bool get_current_state(int pin){
-        int currentState = digitalRead(pin);
-        return (currentState == LOW) != default_state_;
+        int currentState = gpioRead(pin);
+        return (currentState == PI_LOW) != default_state_;
     }
     // Function to reset the limit state after use
     void reset(){
-        pinMode(limitswitch_pin_start_, INPUT);
-        pinMode(limitswitch_pin_end_, INPUT);
+        gpioSetMode(limitswitch_pin_start_, PI_INPUT);
+        gpioSetMode(limitswitch_pin_end_, PI_INPUT);
     }
 };
 int main(int argc, char **argv){
