@@ -42,7 +42,7 @@ ament_target_dependencies(limitswitch_station_node rclcpp std_msgs)
 # Link WiringPi library to the executable
 target_link_libraries(height_sensor_node ${WIRINGPI_LIB})
 target_link_libraries(gripper_node ${PIGPIOD_LIB})
-target_link_libraries(limitswitch_station_node ${WIRINGPI_LIB})
+target_link_libraries(limitswitch_station_node ${PIGPIOD_LIB})
 
 # Install rules
 install(TARGETS
