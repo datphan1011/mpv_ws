@@ -1,7 +1,8 @@
 #include <iostream>
 #include <functional>
-#include <wiringPi.h>
-#include <wiringPiI2C.h>
+// #include <wiringPi.h>
+// #include <wiringPiI2C.h>
+#include <pigpio.h>
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -32,27 +33,34 @@ public:
         gripper_state_timer_ = this->create_wall_timer(
             std::chrono::seconds(1), std::bind(&Gripper::current_state, this)
         );
-        // Initialize WiringPi
-        wiringPiSetup();
+
+        // Initialize pigpio
+        if (gpioInitialise() < 0) {
+            RCLCPP_INFO(this->get_logger(), "Failed to initialize pigpio");
+            rclcpp::shutdown();
+        }
 
         // Initialize I2C communication with the PCA9685
-        fd_ = wiringPiI2CSetup(PCA9685_ADDR);
-        if(fd_ == -1){
+        pca9685_fd_ = i2cOpen(1, PCA9685_ADDR, 0);
+        if(pca9685_fd_ < 0){
             RCLCPP_INFO(this->get_logger(), "Failed to initialize the I2C");
             rclcpp::shutdown();
         }
+
         // Set PWM Frequency 
         set_pwm_frequency(PWM_FREQUENCY);
     }
     ~Gripper(){
         // Reset the PWM signal on the actuator
         set_pwm(PWM_PIN, 0, 0);
+        i2cClose(pca9685_fd_);  // Close the I2C connection
+        gpioTerminate(); // Terminate pigpio
     }
 private:
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr gripper_state_sub_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr gripper_state_pub_;
     rclcpp::TimerBase::SharedPtr gripper_state_timer_;
-    int fd_;                    // File descriptor for I2C communication
+    int pca9685_fd_;                    // File descriptor for I2C communication
     bool gripper_open_ = false; // Track the state of the gripper
     
     // Set PWM Frequency function   
@@ -65,22 +73,22 @@ private:
         Adding 0.5f ensures proper rounding of the floating-point value to the nearest whole number.*/
         int prescale = static_cast<int>(prescale_value + 0.5f);
 
-        int oldmode = wiringPiI2CReadReg8(fd_, PCA9685_MODE1);  // Reads the current MODE1 register value from the PCA9685 using the WiringPi function wiringPiI2CReadReg8
+        int oldmode = i2cReadByteData(pca9685_fd_, PCA9685_MODE1);  // Reads the current MODE1 register value from the PCA9685 using the WiringPi function wiringPiI2CReadReg8
         int newmode = (oldmode & 0x7F) | 0x10; // sleep
-        wiringPiI2CWriteReg8(fd_, PCA9685_MODE1, newmode);  // Writes newmode back to the MODE1 register of the PCA9685, putting it in sleep mode so that we can safely set the prescale value.
-        wiringPiI2CWriteReg8(fd_, PCA9685_PRESCALE, prescale);  // Sets the PRESCALE register of the PCA9685 to the calculated prescale value using WiringPi's wiringPiI2CWriteReg8 function. This sets the desired PWM frequency.
-        wiringPiI2CWriteReg8(fd_, PCA9685_MODE1, oldmode);  // Restores the original MODE1 register value, waking the device from sleep.
-        delay(10);   // Pauses execution for 10 milliseconds, giving the device time to process the register changes. (Can increase if it too fast)
-        wiringPiI2CWriteReg8(fd_, PCA9685_MODE1, oldmode | 0x80);
+        i2cWriteByteData(pca9685_fd_, PCA9685_MODE1, newmode);  // Writes newmode back to the MODE1 register of the PCA9685, putting it in sleep mode so that we can safely set the prescale value.
+        i2cWriteByteData(pca9685_fd_, PCA9685_PRESCALE, prescale);  // Sets the PRESCALE register of the PCA9685 to the calculated prescale value using WiringPi's wiringPiI2CWriteReg8 function. This sets the desired PWM frequency.
+        i2cWriteByteData(pca9685_fd_, PCA9685_MODE1, oldmode);  // Restores the original MODE1 register value, waking the device from sleep.
+        gpioDelay(10);   // Pauses execution for 10 milliseconds, giving the device time to process the register changes. (Can increase if it too fast)
+        i2cWriteByteData(pca9685_fd_, PCA9685_MODE1, oldmode | 0x80);
     }
 
     // Set PWM duty cycle
     /*The function configures the PCA9685 to generate a PWM signal on a specific channel by defining the start (on) and end (off) times of the PWM pulse*/
     void set_pwm(int channel, int on, int off) {
-        wiringPiI2CWriteReg8(fd_, PCA9685_LED0_ON_L + 4 * channel, on & 0xFF);
-        wiringPiI2CWriteReg8(fd_, PCA9685_LED0_ON_L + 4 * channel + 1, on >> 8);
-        wiringPiI2CWriteReg8(fd_, PCA9685_LED0_ON_L + 4 * channel + 2, off & 0xFF);
-        wiringPiI2CWriteReg8(fd_, PCA9685_LED0_ON_L + 4 * channel + 3, off >> 8);
+        i2cWriteByteData(pca9685_fd_, PCA9685_LED0_ON_L + 4 * channel, on & 0xFF);
+        i2cWriteByteData(pca9685_fd_, PCA9685_LED0_ON_L + 4 * channel + 1, on >> 8);
+        i2cWriteByteData(pca9685_fd_, PCA9685_LED0_ON_L + 4 * channel + 2, off & 0xFF);
+        i2cWriteByteData(pca9685_fd_, PCA9685_LED0_ON_L + 4 * channel + 3, off >> 8);
     }
 
     // Callback function to process incoming messages on /station_control
