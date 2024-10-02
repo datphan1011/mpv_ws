@@ -68,6 +68,8 @@ private:
         std::this_thread::sleep_for(std::chrono::seconds(5));   // delay 5 seconds for each messages
         send_message("LOAD");       // Send LOAD to the /station_control topic
         RCLCPP_INFO(this->get_logger(), "LOAD task completed"); // Print out on the console
+        std::this_thread::sleep_for(std::chrono::seconds(20));  //delay for 20 seconds wait for loading complete then send stop message
+        send_message("GRI_ST");
     }
     // Do initial position task
     void perform_initial_pose_task(){
