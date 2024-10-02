@@ -28,16 +28,19 @@ add_executable(height_sensor_node src/HeightSensorStation.cpp)
 add_executable(server_node src/Server.cpp)
 add_executable(station_control_node src/StationControl.cpp)
 add_executable(gripper_node src/Gripper.cpp)
+add_executable(limitswitch_station_node src/LimitSwitch.cpp)
 
 # Link ROS2 libraries to the executable
 ament_target_dependencies(height_sensor_node rclcpp std_msgs std_srvs)
 ament_target_dependencies(server_node rclcpp std_msgs std_srvs my_custom_service)
 ament_target_dependencies(station_control_node std_msgs rclcpp)
 ament_target_dependencies(gripper_node rclcpp std_msgs)
+ament_target_dependencies(limitswitch_station_node rclcpp std_msgs)
 
 # Link WiringPi library to the executable
 target_link_libraries(height_sensor_node ${WIRINGPI_LIB})
 target_link_libraries(gripper_node ${WIRINGPI_LIB})
+target_link_libraries(limitswitch_station_node ${WIRINGPI_LIB})
 
 # Install rules
 install(TARGETS
@@ -45,6 +48,7 @@ install(TARGETS
   server_node
   station_control_node
   gripper_node
+  limitswitch_station_node
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
