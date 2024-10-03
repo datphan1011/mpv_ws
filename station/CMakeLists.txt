@@ -23,6 +23,7 @@ include_directories(
 
 # Find and link Pigpio library
 find_library(PIGPIO_LIB pigpio REQUIRED PATHS /usr/local/lib)
+find_library(PIGPIOD_IF2_LIB pigpiod_if2 REQUIRED PATHS /usr/local/lib)
 
 # Specify the source files for the node
 add_executable(height_sensor_node src/HeightSensorStation.cpp)
