@@ -13,17 +13,16 @@ find_package(std_srvs REQUIRED)
 find_package(my_custom_service REQUIRED)
 
 # Include the directory where your custom library is located
-# include_directories(
-#   ${CMAKE_SOURCE_DIR}/include/Adafruit-PWM-Servo-Driver-Library-master
-#   ${CMAKE_SOURCE_DIR}/include/Adafruit_VL53L0X-master
-#   ${CMAKE_SOURCE_DIR}/include/Adafruit_BusIO-master
-#   ${CMAKE_SOURCE_DIR}/include/ArduinoCore-avr-master
-# )
+include_directories(
+  # ${CMAKE_SOURCE_DIR}/include/Adafruit-PWM-Servo-Driver-Library-master
+  # ${CMAKE_SOURCE_DIR}/include/Adafruit_VL53L0X-master
+  # ${CMAKE_SOURCE_DIR}/include/Adafruit_BusIO-master
+  # ${CMAKE_SOURCE_DIR}/include/ArduinoCore-avr-master
+  # ${CMAKE_SOURCE_DIR}/include/pigpio
+)
 
-# Add WiringPi
-# find_library(WIRINGPI_LIB wiringPi REQUIRED)
-find_library(PIGPIOD_LIB pigpio REQUIRED)
-find_library(PIGPIOD_IF2_LIB pigpiod_if2 REQUIRED)
+# Find and link Pigpio library
+find_library(PIGPIO_LIB pigpio REQUIRED PATHS /usr/local/lib)
 
 # Specify the source files for the node
 add_executable(height_sensor_node src/HeightSensorStation.cpp)
@@ -39,10 +38,10 @@ ament_target_dependencies(station_control_node std_msgs rclcpp)
 ament_target_dependencies(gripper_node rclcpp std_msgs)
 ament_target_dependencies(limitswitch_station_node rclcpp std_msgs)
 
-# Link WiringPi library to the executable
+# Link Pigpio library to the executable
 target_link_libraries(height_sensor_node ${PIGPIO_LIB})
-target_link_libraries(gripper_node ${PIGPIOD_LIB})
-target_link_libraries(limitswitch_station_node ${PIGPIOD_LIB})
+target_link_libraries(gripper_node ${PIGPIO_LIB})
+target_link_libraries(limitswitch_station_node ${PIGPIO_LIB})
 
 # Install rules
 install(TARGETS
