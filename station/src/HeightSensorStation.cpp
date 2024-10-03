@@ -17,7 +17,7 @@ public:
 
         // Initialize pigpio
         if (gpioInitialise() < 0) {
-            RCLCPP_ERRO(this->get_logger(), "Failed to initialize pigpio");
+            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio");
             rclcpp::shutdown();
         }
         // Left and right sensor pin
@@ -35,7 +35,7 @@ public:
         // Initialize first sensor
         gpioWrite(left_sensor_shudown_pin, PI_HIGH);
         usleep(100000); // 100 ms
-        vl53l0x_1_fd_ = i2cOpen(1, 0x29); // Default I2C address before changing
+        vl53l0x_1_fd_ = i2cOpen(1, 0x29, 0); // Default I2C address before changing
 
         if (vl53l0x_1_fd_ == -1)
         {
@@ -47,7 +47,7 @@ public:
         // Initialize second sensor
         gpioWrite(right_sensor_shudown_pin, PI_HIGH);
         usleep(100000); // 100 ms
-        vl53l0x_2_fd_ = i2cOpen(1, 0x29); // Default I2C address
+        vl53l0x_2_fd_ = i2cOpen(1, 0x30, 0); // Default I2C address
         if (vl53l0x_2_fd_ == -1)
         {
             RCLCPP_ERROR(this->get_logger(), "Failed to initialize sensor 2");
