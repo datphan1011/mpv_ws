@@ -17,8 +17,8 @@ public:
 
         // Initialize pigpio
         if (gpioInitialise() < 0) {
-            RCLCPP_INFO(this->get_logger(), "Failed to initialize pigpio");
-             rclcpp::shutdown();
+            RCLCPP_ERRO(this->get_logger(), "Failed to initialize pigpio");
+            rclcpp::shutdown();
         }
         // Left and right sensor pin
         left_sensor_shudown_pin = 23; // GPIO23
@@ -91,6 +91,9 @@ private:
         //adding the data of the function into the right sensor and publish it
         msg_2->data = right_sensor_range;
         right_sensor_publisher_->publish(*msg_2);
+        // Print the data into the console so I can check it
+        RCLCPP_INFO(this->get_logger(), "The data of the left sensor:  %d", left_sensor_range);
+        RCLCPP_INFO(this->get_logger(), "The data of the right sensor: %d", right_sensor_range);
     }
 
     int get_sensor_range(int sensor_fd)
@@ -104,18 +107,21 @@ private:
         }
         return range;
     }
-
+    /*sets the "timing budget" for the VL53L0X time-of-flight (ToF) sensor. In the VL53L0X sensor,
+    the timing budget represents how much time the sensor spends measuring distances for each ranging operation (in microseconds). 
+    A longer timing budget generally results in more accurate measurements, but it also makes the sensor slower.*/
     void set_timing_budget(int sensor_fd_, uint32_t budget)
     {
-        // Timing budget register addresses (example)
+        // Timing budget register addresses, This internal register can be access directly via I2C without VL53L0X library
         const int FINAL_RANGE_CONFIG_TIMEOUT_MACROP_HI = 0x71; //change it back base on the datasheet
         const int FINAL_RANGE_CONFIG_TIMEOUT_MACROP_LO = 0x72; //change it back base on the datasheet
 
         // Convert the budget (in microseconds) to register values
         // Formula based on VL53L0X datasheet
         uint16_t budget_reg_value = (budget / 2) - 15;
-
+        // High byte: (budget_reg_value >> 8) & 0xFF shifts the 16-bit value 8 bits to the right and extracts the upper byte.
         i2cWriteByteData(sensor_fd_, FINAL_RANGE_CONFIG_TIMEOUT_MACROP_HI, (budget_reg_value >> 8) & 0xFF);
+        // Low byte: budget_reg_value & 0xFF extracts the lower byte.
         i2cWriteByteData(sensor_fd_, FINAL_RANGE_CONFIG_TIMEOUT_MACROP_LO, budget_reg_value & 0xFF);
     }
 };
