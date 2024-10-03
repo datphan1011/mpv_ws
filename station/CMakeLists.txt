@@ -51,6 +51,6 @@ install(TARGETS
   station_control_node
   gripper_node
   limitswitch_station_node
-  DESTINATION lib/${PROJECT_NAME})
+DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
