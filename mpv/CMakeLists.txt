@@ -13,8 +13,8 @@ find_package(std_srvs REQUIRED)
 find_package(my_custom_service REQUIRED)
 
 # find library
-find_library(PIGPIOD_LIB pigpio REQUIRED)
-find_library(PIGPIOD_IF2_LIB pigpiod_if2 REQUIRED)
+find_library(PIGPIO_LIB pigpio REQUIRED PATHS /usr/local/lib)
+find_library(PIGPIOD_IF2_LIB pigpiod_if2 REQUIRED PATHS /usr/local/lib)
 
 # Specify the source files for the node
 add_executable(mpv_control_node src/MPVControl.cpp)
@@ -31,7 +31,7 @@ ament_target_dependencies(lock_stepper_node rclcpp std_msgs)
 ament_target_dependencies(limit_switch_node rclcpp std_msgs)
 
 # Link library to the designated file
-target_link_libraries(height_sensor_mpv_node ${PIGPIO_LIB})
+target_link_libraries(height_sensor_mpv_node ${PIGPIO_LIB} ${PIGPIOD_IF2_LIB})
 target_link_libraries(mpv_control_node ${PIGPIO_LIB})
 target_link_libraries(limit_switch_node ${PIGPIO_LIB})
 
