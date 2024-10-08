@@ -6,6 +6,7 @@ def generate_launch_description():
         Node(
             package='mpv',
             executable='mpv_control_node',
+            name = 'MPV_Control',
             output='screen',
         ),
         Node(
