@@ -1,3 +1,4 @@
+# This file is a launch file that launch all the package at the same time
 import os
 
 from ament_index_python import get_package_share_directory
