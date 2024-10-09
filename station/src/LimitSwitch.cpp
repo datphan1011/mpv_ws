@@ -17,10 +17,7 @@ public:
         // Create a timer for the publisher to publish the signal 
         limitswitch_timer_ = this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&LimitSwitch::timer_callback, this));
         // Initialize the pigpio library
-        if (gpioInitialise() < 0) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio library");
-            return;
-        }
+        initialize_PIGPIO();
         // Initialize GPIO pins
         gpioSetMode(limitswitch_pin_start_, PI_INPUT);
         gpioSetMode(limitswitch_pin_end_, PI_INPUT);
@@ -65,6 +62,14 @@ private:
     void reset(){
         gpioSetMode(limitswitch_pin_start_, PI_INPUT);
         gpioSetMode(limitswitch_pin_end_, PI_INPUT);
+    }
+    int initialize_PIGPIO() {
+        if (gpioInitialise() < 0) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio library");
+            return -1;  // Return error code
+        }
+        RCLCPP_INFO(this->get_logger(), "pigpio library initialized successfully");
+        return 0;  // Success
     }
 };
 int main(int argc, char **argv){

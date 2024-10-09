@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 #include <pigpio.h>
+#include <CustomGPIO.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/int32.hpp>
@@ -12,18 +13,23 @@ public:
     LinearActuator(int left_up_act_pin, int left_down_act_pin, int right_up_act_pin, int right_down_act_pin) 
     : Node("linear_actuator_node"), left_differences(0), right_differences(0){
         // Initialize the node subscription
+        // mpv left sensor
         mpv_left_sensor_sub_ = this->create_subscription<std_msgs::msg::Int32>(
         "left_height_mpv", 10,std::bind(&LinearActuator::mpv_left_sensor_callback, this, std::placeholders::_1));
+        // station left sensor
         station_left_sensor_sub_ = this->create_subscription<std_msgs::msg::Int32>(
         "left_height_station", 10,std::bind(&LinearActuator::station_left_sensor_callback, this, std::placeholders::_1));
+        // mpv right sensor
         mpv_right_sensor_sub_ = this->create_subscription<std_msgs::msg::Int32>(
         "right_height_mpv", 10,std::bind(&LinearActuator::mpv_right_sensor_callback, this, std::placeholders::_1));
+        // station right sensor
         station_right_sensor_sub_ = this->create_subscription<std_msgs::msg::Int32>(
         "right_height_station", 10,std::bind(&LinearActuator::station_right_sensor_callback, this, std::placeholders::_1));
+        // station control
         station_control_sub_ = this->create_subscription<std_msgs::msg::String>(
         "station_control", 10,std::bind(&LinearActuator::station_control_callback, this, std::placeholders::_1));
         // Initialize Pigpio library
-        initialize_GPIO();
+        initialize_PIGPIO();
         // Setting up mode
         gpioSetMode(left_up_act_pin, PI_OUTPUT);
         gpioSetMode(left_down_act_pin, PI_OUTPUT);
@@ -84,14 +90,6 @@ private:
     int station_left_sensor_data =-1, station_right_sensor_data = -1;
 
     // Function to initialize the GPIO (Will change to another file so it more compact)
-    int initialize_GPIO() {
-        if (gpioInitialise() < 0) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio library");
-            return -1;  // Return error code
-        }
-        RCLCPP_INFO(this->get_logger(), "pigpio library initialized successfully");
-        return 0;  // Success
-    }
     void adjustMovement(const std::string& side, int station_value, int mpv_value, int difference) {
         if (station_value < mpv_value + difference) {
             moveUp(side);
@@ -124,6 +122,14 @@ private:
     }
     void station_right_sensor_callback(const std_msgs::msg::Int32::SharedPtr msg){
         station_right_sensor_data = msg->data;
+    }
+    int initialize_PIGPIO() {
+        if (gpioInitialise() < 0) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio library");
+            return -1;  // Return error code
+        }
+        RCLCPP_INFO(this->get_logger(), "pigpio library initialized successfully");
+        return 0;  // Success
     }
 };
 int main(int argc, char **argv){
