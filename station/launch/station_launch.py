@@ -25,11 +25,11 @@ def generate_launch_description():
             name = 'HeightSensorStation',
             output = 'screen',
         ),
-        # Node(
-        #     package = 'station',
-        #     name = 'LeadScrew',
-        #     executable = 'lead_screw_node',
-        # ),
+        Node(
+            package = 'station',
+            name = 'LeadScrew',
+            executable = 'lead_screw_node',
+        ),
         Node(
             package = 'station',
             executable = 'limitswitch_station_node',
