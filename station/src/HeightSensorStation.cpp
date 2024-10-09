@@ -11,8 +11,8 @@ class HeightSensorStation : public rclcpp::Node{
 public:
     HeightSensorStation() : Node("height_sensor_node_station"){
         // Initialize the left and right sensor publisher
-        left_sensor_publisher_=this->create_publisher<std_msgs::msg::Int32>("left_sensor_data", 10);
-        right_sensor_publisher_=this->create_publisher<std_msgs::msg::Int32>("right_sensor_data", 10);
+        left_sensor_publisher_=this->create_publisher<std_msgs::msg::Int32>("left_sensor_station", 10);
+        right_sensor_publisher_=this->create_publisher<std_msgs::msg::Int32>("right_sensor_station", 10);
         height_sensor_timer_=this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&HeightSensorStation::timer_callback, this));
 
         // Initialize pigpio

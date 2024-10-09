@@ -38,18 +38,18 @@ private:
     // Function to send the message to the lock stepper (Change when implemented on the MPV)
     void limit_switch_state_publish() {
         // Simulate alternating between locked and unlocked states for testing
-        left_limitswitch_state = !left_limitswitch_state;
-        right_limitswitch_state = !right_limitswitch_state;
+        // left_limitswitch_state = !left_limitswitch_state;
+        // right_limitswitch_state = !right_limitswitch_state;
 
         // Create and publish left switch state message
         auto left_msg = std_msgs::msg::Bool();
-        left_msg.data = left_limitswitch_state;
+        left_msg.data = !left_limitswitch_state;
         left_limit_pub_->publish(left_msg);
         RCLCPP_INFO(this->get_logger(), "Left limit switch state: %s", left_limitswitch_state ? "Locked" : "Unlocked");
 
         // Create and publish right switch state message
         auto right_msg = std_msgs::msg::Bool();
-        right_msg.data = right_limitswitch_state;
+        right_msg.data = !right_limitswitch_state;
         right_limit_pub_->publish(right_msg);
         RCLCPP_INFO(this->get_logger(), "Right limit switch state: %s", right_limitswitch_state ? "Locked" : "Unlocked");
     }
