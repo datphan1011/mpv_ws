@@ -49,6 +49,7 @@ target_link_libraries(gripper_node ${PIGPIO_LIB})
 target_link_libraries(limitswitch_station_node ${PIGPIO_LIB})
 target_link_libraries(linear_actuator_node ${PIGPIO_LIB})
 target_link_libraries(lead_screw_node ${PIGPIO_LIB})
+
 # Install rules
 install(TARGETS
   height_sensor_node
