@@ -11,7 +11,9 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(my_custom_service REQUIRED)
-
+find_package(cv_bridge REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(OpenCV REQUIRED)
 # Include the directory where your custom library is located
 include_directories(
   # ${CMAKE_SOURCE_DIR}/include/Adafruit-PWM-Servo-Driver-Library-master
