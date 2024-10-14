@@ -7,4 +7,4 @@ In this repository you can find the source code of the MPV, Exchange station and
 # External Library
 
 In this project I use the pigpio as an external library to control and manuever the Raspberry Pi 4
-This is the link to the main library [Extern Library](https://github.com/joan2937/pigpio)
+This is the link to the main library [Pigpio Library](https://github.com/joan2937/pigpio)
