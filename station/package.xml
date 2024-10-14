@@ -15,6 +15,7 @@
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>my_custom_service</depend>
+  <depend>sensor_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
   <depend>OpenCV</depend>
