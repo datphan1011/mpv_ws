@@ -9,7 +9,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <std_msgs/msg/int64.hpp>
+#include <std_msgs/msg/int32.hpp>
 //--------------------------------------------
 
 class MPVControl : public rclcpp::Node{
