@@ -46,6 +46,13 @@ public:
             gpioWrite(right_up_act_pin, 1);
             RCLCPP_INFO(this->get_logger(), "Right actuator moving up");
         }
+        /*
+        gpioWrite(left_down_act_pin, 0);
+        gpioWrite(left_up_act_pin, 1);
+        gpioWrite(right_down_act_pin, 0);
+        gpioWrite(right_up_act_pin, 1);
+        RCLCPP_INFO(this->get_logger(), "Both actuators moving up");
+        */
     }
     // Make the left actuator moving down if it is at peak moving right actuator.
     void moveDown(const std::string &actuator = "left") {
@@ -58,6 +65,13 @@ public:
             gpioWrite(right_up_act_pin, 0);
             RCLCPP_INFO(this->get_logger(), "Right actuator moving down");
         }
+        /*
+        gpioWrite(left_down_act_pin, 1);
+        gpioWrite(left_up_act_pin, 0);
+        gpioWrite(right_down_act_pin, 1);
+        gpioWrite(right_up_act_pin, 0);
+        RCLCPP_INFO(this->get_logger(), "Both actuators moving down");
+        */
     }
     // Make the left actuator stop moving if it is at peak do right actuator.
     void stopMoving(const std::string &actuator = "left") {
@@ -70,6 +84,13 @@ public:
             gpioWrite(right_up_act_pin, 0);
             RCLCPP_INFO(this->get_logger(), "Right actuator stopped");
         }
+        /*
+        gpioWrite(left_down_act_pin, 0);
+        gpioWrite(left_up_act_pin, 0);
+        gpioWrite(right_down_act_pin, 0);
+        gpioWrite(right_up_act_pin, 0);
+        RCLCPP_INFO(this->get_logger(), "Both actuators stopped");
+        */
     }
     ~LinearActuator() {
         gpioTerminate();  // Terminate pigpio on destruction
