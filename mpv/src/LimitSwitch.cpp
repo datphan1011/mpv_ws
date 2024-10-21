@@ -61,6 +61,7 @@ private:
         // Implement a mechanism to return the correct instance for the pin.
         // For example, you can keep track of instances in a static map or array.
         // This part depends on how many instances you have and your design.
+        (void)pin;
         return nullptr;
     }
 };
