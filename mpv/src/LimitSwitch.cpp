@@ -39,6 +39,9 @@ private:
 
     void callback(int gpio, int level, uint32_t tick) {
         // Update the state
+        (void)gpio;  // Mark gpio as intentionally unused
+        (void)level;  // Mark level as intentionally unused
+        (void)tick;   // Mark tick as intentionally unused
         state_ = getState();
         publish_state();
     }
