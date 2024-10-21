@@ -1,65 +1,91 @@
-//--------------------------------------------
-//Standard library#include <iostream>
-#include <chrono>
-#include <functional>
-#include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/bool.hpp>
-//--------------------------------------------
+#include <rclcpp/executors/multi_threaded_executor.hpp>
+#include <pigpio.h>    // pigpio for GPIO control
+#include <memory>      // For smart pointers
+
 class LimitSwitch : public rclcpp::Node {
 public:
-    LimitSwitch() : Node("limit_switch_nodes") {
-        // Create publishers for left and right limit switches
-        left_limit_pub_ = this->create_publisher<std_msgs::msg::Bool>("limit_switch1", 10);
-        right_limit_pub_ = this->create_publisher<std_msgs::msg::Bool>("limit_switch2", 10);
+    LimitSwitch(int pin, const std::string& name, int edge, bool inverse = false)
+        : Node(name), pin_(pin), state_(false), inverse_(inverse) {
+        
+        // Initialize pigpio library
+        if (gpioInitialise() < 0) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio");
+            return;
+        }
 
-        // Timer to simulate publishing the state every second
-        timer_ = this->create_wall_timer(
-            std::chrono::seconds(1),
-            std::bind(&LimitSwitch::limit_switch_state_publish, this)
-        );
+        // Set the pin as input and enable pull-up resistor
+        gpioSetMode(pin_, PI_INPUT);
+        gpioSetPullUpDown(pin_, PI_PUD_UP);
 
-        // Initialize the state of the limit switches
-        left_limitswitch_state = true;  // 1 (true) is locked
-        right_limitswitch_state = true; // 1 (true) is locked
+        // Add event detection (edge detection)
+        if (gpioSetISRFunc(pin_, edge, 0, &LimitSwitch::callback_wrapper) != 0) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set ISR function for pin %d", pin_);
+        }
+
+        // Create ROS2 publisher
+        pub_limitswitch_ = this->create_publisher<std_msgs::msg::Bool>("/" + name + "_state", 10);
+
+        // Set a timer to publish the state at a regular interval
+        timer_ = this->create_wall_timer(std::chrono::milliseconds(50), std::bind(&LimitSwitch::publishState, this));
+
+        RCLCPP_INFO(this->get_logger(), "LimitSwitch node initialized for pin %d", pin_);
+    }
+
+    ~LimitSwitch() {
+        // Clean up GPIO resources
+        gpioTerminate();
     }
 
 private:
-    // Publishers for the left and right limit switches
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr left_limit_pub_;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr right_limit_pub_;
-
-    // Timer for periodic publishing
+    int pin_;
+    bool state_;
+    bool inverse_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_limitswitch_;
     rclcpp::TimerBase::SharedPtr timer_;
 
-    // States of the limit switches (true for locked, false for unlocked)
-    bool left_limitswitch_state;
-    bool right_limitswitch_state;
+    static void callback_wrapper(int gpio, int level, uint32_t tick, void* userData) {
+        auto* self = reinterpret_cast<LimitSwitch*>(userData);
+        self->callback(gpio, level, tick);
+    }
 
-    // Function to send the message to the lock stepper (Change when implemented on the MPV)
-    void limit_switch_state_publish() {
-        // Simulate alternating between locked and unlocked states for testing
-        // left_limitswitch_state = !left_limitswitch_state;
-        // right_limitswitch_state = !right_limitswitch_state;
+    void callback(int gpio, int level, uint32_t tick) {
+        if (gpio == pin_) {
+            state_ = getState();
+            publishState();
+        }
+    }
 
-        // Create and publish left switch state message
-        auto left_msg = std_msgs::msg::Bool();
-        left_msg.data = !left_limitswitch_state;
-        left_limit_pub_->publish(left_msg);
-        RCLCPP_INFO(this->get_logger(), "Left limit switch state: %s", left_limitswitch_state ? "Locked" : "Unlocked");
+    bool getState() const {
+        return inverse_ ? !gpioRead(pin_) : gpioRead(pin_);
+    }
 
-        // Create and publish right switch state message
-        auto right_msg = std_msgs::msg::Bool();
-        right_msg.data = !right_limitswitch_state;
-        right_limit_pub_->publish(right_msg);
-        RCLCPP_INFO(this->get_logger(), "Right limit switch state: %s", right_limitswitch_state ? "Locked" : "Unlocked");
+    void publishState() {
+        auto msg = std_msgs::msg::Bool();
+        msg.data = getState();
+        pub_limitswitch_->publish(msg);
     }
 };
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<LimitSwitch>();
-    rclcpp::spin(node);
+
+    // Initialize two limit switches
+    auto limit_switch_1 = std::make_shared<LimitSwitch>(22, "limit_switch_1", RISING_EDGE);
+    auto limit_switch_2 = std::make_shared<LimitSwitch>(25, "limit_switch_2", RISING_EDGE);
+
+    // Create a multi-threaded executor to handle multiple nodes
+    rclcpp::executors::MultiThreadedExecutor executor;
+    
+    // Add both nodes to the executor
+    executor.add_node(limit_switch_1);
+    executor.add_node(limit_switch_2);
+    
+    // Spin the executor to handle both nodes
+    executor.spin();
+    
     rclcpp::shutdown();
     return 0;
 }
+
