@@ -87,9 +87,71 @@ QRCodeDetection::QRCodeDetection() : Node("qr_code_detection_node"), cap(0) {
     height_sensor_publisher_ = this->create_publisher<std_msgs::msg::Int32>("height_sensor_data", 10);
     linear_actuator_publisher_ = this->create_publisher<std_msgs::msg::Int32>("linear_actuator_data", 10);
 }
+// Destructor
+QRCodeDetection::~QRCodeDetection() {
+    cap.release(); // Release the camera resource when the node shuts down
+}
 
-int main(int argc ,char **argv){
+// Main loop for the measurement process, continuously captures frames and detects QR codes
+void QRCodeDetection::measure() {
+    bool done = false;
+    int falseCnt = 0; // Counter for how many frames failed to detect the required QR codes
+    Mat frame; // Variable to store the captured frame
+
+    while (!done) {
+        map<string, BarcodeData> decodedCodes; // Holds the detected QR codes
+        cap.read(frame); // Capture a frame from the camera
+        if (frame.empty()) {
+            RCLCPP_ERROR(this->get_logger(), "ERROR capturing frame.");
+            continue;
+        }
+
+        processFrame(frame); // Optional image processing (can display the frame)
+        if (readQR(frame, decodedCodes) == 4) { // Detect QR codes in the frame
+            // Check if 4 specific QR codes are present (MPV_L, MPV_R, STN_L, STN_R)
+            if (decodedCodes.find("MPV_L") != decodedCodes.end() && 
+                decodedCodes.find("MPV_R") != decodedCodes.end() && 
+                decodedCodes.find("STN_L") != decodedCodes.end() && 
+                decodedCodes.find("STN_R") != decodedCodes.end()) {
+                
+                // Successfully detected all required QR codes, process further
+                done = true;
+            }
+        }
+        falseCnt++; // Increment the failure counter
+        if (falseCnt > 100) {
+            RCLCPP_ERROR(this->get_logger(), "4 QR codes not found.");
+            break;
+        }
+    }
+}
+// Publish the calculated data (height sensor, linear actuator) based on the detected QR codes
+void QRCodeDetection::publishData(int dstToGoH) {
+    auto height_sensor_msg = std_msgs::msg::Int32();
+    auto linear_actuator_msg = std_msgs::msg::Int32();
+
+    // Assign calculated data to messages and publish them
+    height_sensor_msg.data = dstToGoH;
+    height_sensor_publisher_->publish(height_sensor_msg);
+    linear_actuator_msg.data = dst_to_go_v;
+    linear_actuator_publisher_->publish(linear_actuator_msg);
+}
+
+// Main function to launch the QRCodeDetection node and either calibrate or measure
+int main(int argc, char *argv[]) {
     rclcpp::init(argc, argv);
-    rclcpp::shutdown();
+    auto qrCodeNode = std::make_shared<QRCodeDetection>(); // Create QRCodeDetection node
+    char choice;
+    
+    // Prompt user for choice between calibration or measurement
+    std::cout << "Enter (C) to Calibrate or (M) to Measure: ";
+    std::cin >> choice;
+    if (choice == 'C' || choice == 'c') {
+        qrCodeNode->calibrate(); // Start calibration
+    } else if (choice == 'M' || choice == 'm') {
+        qrCodeNode->measure(); // Start measurement
+    }
+
+    rclcpp::shutdown(); // Shut down ROS2
     return 0;
 }
