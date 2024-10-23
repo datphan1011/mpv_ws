@@ -16,6 +16,14 @@
 using namespace std;
 using namespace cv;
 
+// Structure to hold barcode (QR code) data
+struct BarcodeData {
+    Point midPoint;           // Midpoint of the detected QR code
+    vector<Point> position;   // Position of the QR code corners
+    string data;              // Decoded data from the QR code
+    int size;                 // Size of the QR code
+};
+
 class QRCodeDetection : public rclcpp::Node {
 public:
     // Variables representing the distance to go (horizontal and vertical)
@@ -177,6 +185,59 @@ void QRCodeDetection::calibrate() {
 // Enable or disable the display of camera frames
 void QRCodeDetection::enableDisplay(bool en) {
     display_enable = en;
+}
+// Write calibration data to the file
+void QRCodeDetection::writeFile(int B1, int B2) {
+    RCLCPP_INFO(this->get_logger(), "Writing to file: B1: %d, B2: %d", B1, B2);
+    std::ifstream file_in(filePath); // Open the file for reading
+    if (!file_in.is_open()) {
+        RCLCPP_ERROR(this->get_logger(), "Error: Unable to open file for reading.");
+        return;
+    }
+
+    // Read the file contents
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(file_in, line)) {
+        lines.push_back(line); // Store each line of the file
+    }
+    file_in.close();
+
+    std::ofstream file_out(filePath); // Open the file for writing
+    if (!file_out.is_open()) {
+        RCLCPP_ERROR(this->get_logger(), "Error: Unable to open file for writing.");
+        return;
+    }
+
+    // Update the calibration values in the file
+    for (std::string &line : lines) {
+        if (line.rfind("B1", 0) == 0) { // If the line starts with "B1"
+            file_out << "B1:" << B1 << std::endl;
+        } else if (line.rfind("B2", 0) == 0) { // If the line starts with "B2"
+            file_out << "B2:" << B2 << std::endl;
+        } else {
+            file_out << line << std::endl; // Write other lines unchanged
+        }
+    }
+    file_out.close();
+}
+// Read calibration data from the file
+void QRCodeDetection::readFile() {
+    std::ifstream file(filePath);
+    if (!file.is_open()) {
+        RCLCPP_ERROR(this->get_logger(), "Error: Unable to open file.");
+        return;
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        size_t delimiter_pos = line.find(":");
+        if (delimiter_pos != std::string::npos) {
+            std::string key = line.substr(0, delimiter_pos);
+            std::string value = line.substr(delimiter_pos + 1);
+            data_dictionary[key] = value;
+        }
+    }
+    file.close();
 }
 
 // Publish the calculated data (height sensor, linear actuator) based on the detected QR codes
