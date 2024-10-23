@@ -140,6 +140,45 @@ int QRCodeDetection::readQR(const Mat &frame, map<string, BarcodeData> &scannedC
     return scannedCodes.size(); // Return the number of QR codes detected
 }
 
+// Calibration function to detect QR codes and adjust the horizontal/vertical bias
+void QRCodeDetection::calibrate() {
+    RCLCPP_INFO(this->get_logger(), "Starting calibration");
+    bool done = false;
+    int false_cnt = 0; // Counter for calibration failures
+    Mat frame;
+
+    while (!done) {
+        cap.read(frame); // Capture a frame
+        if (frame.empty()) {
+            RCLCPP_ERROR(this->get_logger(), "ERROR capturing frame.");
+            continue;
+        }
+
+        map<string, BarcodeData> decoded_codes;
+        if (readQR(frame, decoded_codes) == 4) { // Check if 4 QR codes are detected
+            // Calculate midpoints for MPV and STN (station) QR codes
+            Point mid_point_mpv = Point(((decoded_codes.at("MPV_L").midPoint.x + decoded_codes.at("MPV_R").midPoint.x) / 2),
+                                        ((decoded_codes.at("MPV_L").midPoint.y + decoded_codes.at("MPV_R").midPoint.y) / 2));
+            Point mid_point_stn = Point(((decoded_codes.at("STN_L").midPoint.x + decoded_codes.at("STN_R").midPoint.x) / 2),
+                                        ((decoded_codes.at("STN_L").midPoint.y + decoded_codes.at("STN_R").midPoint.y) / 2));
+            horizontal_bias = mid_point_stn.x - mid_point_mpv.x; // Calculate horizontal bias
+            vertical_bias = mid_point_stn.y - mid_point_mpv.y;   // Calculate vertical bias
+            writeFile(horizontal_bias, vertical_bias); // Save biases to file
+            done = true;
+        }
+        false_cnt++; // Increment the failure counter
+        if (false_cnt > 100) {
+            RCLCPP_ERROR(this->get_logger(), "4 QR codes not found.");
+            break;
+        }
+    }
+}
+
+// Enable or disable the display of camera frames
+void QRCodeDetection::enableDisplay(bool en) {
+    display_enable = en;
+}
+
 // Publish the calculated data (height sensor, linear actuator) based on the detected QR codes
 void QRCodeDetection::publishData(int dstToGoH) {
     auto height_sensor_msg = std_msgs::msg::Int32();
