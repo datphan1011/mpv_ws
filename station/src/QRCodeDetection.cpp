@@ -62,6 +62,32 @@ private:
     // Function to publish processed data (like height or actuator control)
     void publishData(int dstToGoH);
 };
+
+QRCodeDetection::QRCodeDetection() : Node("qr_code_detection_node"), cap(0) {
+    // Read calibration data from the file
+    readFile();
+    horizontal_bias = stoi(data_dictionary.at("B1")); // Load horizontal bias
+    vertical_bias = stoi(data_dictionary.at("B2"));   // Load vertical bias
+
+    // Set camera properties (resolution and format)
+    cap.set(CAP_PROP_FRAME_WIDTH, 4608);
+    cap.set(CAP_PROP_FRAME_HEIGHT, 2592);
+    cap.set(CAP_PROP_MODE, 1);
+    cap.set(CAP_PROP_FORMAT, 0);
+
+    // Check if the camera was successfully opened
+    if (!cap.isOpened()) {
+        RCLCPP_ERROR(this->get_logger(), "Error opening camera.");
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Brief delay for camera to initialize
+    RCLCPP_INFO(this->get_logger(), "QRCodeDetection node initialized");
+
+    // Initialize publishers for HeightSensor and LinearActuator
+    height_sensor_publisher_ = this->create_publisher<std_msgs::msg::Int32>("height_sensor_data", 10);
+    linear_actuator_publisher_ = this->create_publisher<std_msgs::msg::Int32>("linear_actuator_data", 10);
+}
+
 int main(int argc ,char **argv){
     rclcpp::init(argc, argv);
     rclcpp::shutdown();
