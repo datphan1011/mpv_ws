@@ -125,6 +125,21 @@ void QRCodeDetection::measure() {
         }
     }
 }
+// Detect and decode QR codes in a camera frame, storing the results in a map
+int QRCodeDetection::readQR(const Mat &frame, map<string, BarcodeData> &scannedCodes) {
+    QRCodeDetector qrDetector;
+    vector<Point> points;
+    string qrData = qrDetector.detectAndDecode(frame, points); // Detect and decode the QR code
+
+    if (!qrData.empty()) { // If QR data is successfully decoded
+        BarcodeData bcData;
+        bcData.data = qrData; // Store the decoded data
+        scannedCodes[bcData.data] = bcData; // Add the QR code data to the map
+        RCLCPP_INFO(this->get_logger(), "Read QR: found: %s at: (%d, %d)", bcData.data.c_str(), bcData.midPoint.x, bcData.midPoint.y);
+    }
+    return scannedCodes.size(); // Return the number of QR codes detected
+}
+
 // Publish the calculated data (height sensor, linear actuator) based on the detected QR codes
 void QRCodeDetection::publishData(int dstToGoH) {
     auto height_sensor_msg = std_msgs::msg::Int32();
