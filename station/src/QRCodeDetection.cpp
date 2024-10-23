@@ -8,14 +8,33 @@
 #include <iostream>
 
 
-// class QRCodeDetection : public rclcpp :: Node{
-// public:
-//     QRCodeDetection() : Node("qr_detection_node"), count_(0){
-//         image_publisher_ = this->create_publisher<sensor_msgs::msg::Image>
-//     }
-// private:
-// };
+class QRCodeDetection : public rclcpp::Node {
+public:
+    int dst_to_go_h = 0, dst_to_go_v = 0;
+    
+    QRCodeDetection();
+    ~QRCodeDetection();
+    void calibrate();
+    void measure();
+    void enableDisplay(bool en);
 
+private:
+    int midSTN = 0, midMPV = 0, horizontal_bias = 0, vertical_bias = 0;
+    bool display_enable = false;
+
+    map<string, string> data_dictionary;
+    VideoCapture cap;
+
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr height_sensor_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr linear_actuator_publisher_;
+
+    void readFile();
+    int readQR(const Mat &frame, map<string, BarcodeData> &scannedCodes);
+    void writeFile(int B1, int B2);
+    void processFrame(const Mat &frame);
+    void publishData(int dstToGoH); // Updated to only one parameter
+
+};
 int main(int argc ,char **argv){
     rclcpp::init(argc, argv);
     rclcpp::shutdown();
