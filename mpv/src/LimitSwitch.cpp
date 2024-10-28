@@ -8,13 +8,14 @@ public:
     // Constructor that initializes the limit switch, sets up the GPIO pin, and ROS2 publisher
     LimitSwitch(int pin, const std::string &name, int edge, bool inverse = false)
     : Node(name), pin_(pin), state_(false), inverse_(inverse) {
-        pub_limitswitch_ = create_publisher<std_msgs::msg::Bool>("/" + name + "_state", 10);  // Create ROS2 publisher
-        timer_ = create_wall_timer(std::chrono::milliseconds(50), std::bind(&LimitSwitch::publish_state, this));  // Set timer to publish state every 50ms
-
-        gpioInitialise();  // Initialize the pigpio library
         gpioSetMode(pin_, PI_INPUT);     // Set the pin as input mode
         gpioSetPullUpDown(pin_, PI_PUD_UP);  // Enable pull-up resistor on the pin
-        gpioSetISRFunc(pin_, edge, 0, &LimitSwitch::callback, this);  // Attach ISR for edge detection
+
+        // Use gpioSetISRFuncEx to attach ISR for edge detection with user data
+        gpioSetISRFuncEx(pin_, edge, 0, LimitSwitch::callback, this);
+
+        pub_limitswitch_ = create_publisher<std_msgs::msg::Bool>("/" + name + "_state", 10);  // Create ROS2 publisher
+        timer_ = create_wall_timer(std::chrono::milliseconds(50), std::bind(&LimitSwitch::publish_state, this));  // Set timer to publish state every 50ms
     }
 
     // Destructor cleans up the GPIO pins
@@ -36,11 +37,12 @@ private:
     }
 
     // Callback method called when an edge event is detected on the GPIO pin
-    static void callback(int gpio, int level, uint32_t tick, void *user_data) {
-        auto *obj = static_cast<LimitSwitch*>(user_data);  // Access the LimitSwitch instance
-        obj->state_ = obj->getState();  // Update the state
-        obj->publish_state();  // Publish the state to ROS2 topic
+    static void callback(void *user_data) {
+        auto *obj = static_cast<LimitSwitch*>(user_data);
+        obj->state_ = obj->getState();
+        obj->publish_state();
     }
+
 
     // Method to publish the current state of the limit switch
     void publish_state() {
@@ -52,6 +54,7 @@ private:
 
 // Main function to initialize ROS2 and run the node
 int main(int argc, char *argv[]) {
+    gpioInitialise();  // Initialize the pigpio library
     rclcpp::init(argc, argv);  // Initialize ROS2
 
     // Create two limit switch nodes, each handling a different GPIO pin
