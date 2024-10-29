@@ -1,80 +1,145 @@
 //--------------------------------------------
 //Standard library
 #include <iostream>
+#include <pigpio.h>
+#include <chrono>
+#include <cmath>
+#include <thread>
+#include <pigpio.h>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/string.hpp>
 //--------------------------------------------
 
 class LockStepper : public rclcpp::Node{
 public:
-    LockStepper() : Node("lock_stepper_node"){
+    static constexpr int IN = PI_LOW;
+    static constexpr int OUT = PI_HIGH;
+    LockStepper(int dirPin, int pulPin, int stepCount = 2150, int maxSpeed = 500, int acceleration = 100)
+        : Node("lock_stepper_node"), dirPin_(dirPin), pulPin_(pulPin),
+          stepCount_(stepCount), maxSpeed_(maxSpeed), acceleration_(acceleration),
+          currentSpeed_(0.0){
+
         // Subscriptions for limit switches
         left_lock_state_sub_ = this->create_subscription<std_msgs::msg::Bool>(
-        "limit_switch1", 10,std::bind(&LockStepper::left_state_callback,this, std::placeholders::_1));
-        right_lock_state_sub_= this->create_subscription<std_msgs::msg::Bool>(
-        "limit_switch2", 10, std::bind(&LockStepper::right_state_callback, this, std::placeholders::_1));
-        // Publishers to unlock the limit switches
-        left_locker_pub_ = this->create_publisher<std_msgs::msg::Bool>(
-        "left_unlock", 10);
-        right_locker_pub_ = this->create_publisher<std_msgs::msg::Bool>(
-        "right_unlock", 10);
+            "limit_switch1", 10, std::bind(&LockStepper::left_state_callback, this, std::placeholders::_1));
+        right_lock_state_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+            "limit_switch2", 10, std::bind(&LockStepper::right_state_callback, this, std::placeholders::_1));
+        // Subscription to MPV control
+        mpv_control_sub_ = this->create_subscription<std_msgs::msg::String>(
+            "/MPV_control", 10, std::bind(&LockStepper::mpv_control_callback, this, std::placeholders::_1));
+
+        // State tracking for limit switches
+        lm1_active_ = false;
+        lm2_active_ = false;
+        // Initialize pigpio
+        if (gpioInitialise() < 0) {
+            RCLCPP_INFO(this->get_logger(), "Failed to initialize pigpio");
+            rclcpp::shutdown();
+        }   
+        // Set pin
+        gpioSetMode(dirPin_, PI_OUTPUT);
+        gpioSetMode(pulPin_, PI_OUTPUT);     
+    }
+    ~LockStepper() {
+        gpioWrite(dirPin_, PI_LOW);
+        gpioWrite(pulPin_, PI_LOW);
+        gpioTerminate();
     }
 private:
-    // Subscriptions for limit switches
+    int dirPin_, pulPin_;
+    int stepCount_, maxSpeed_, acceleration_;
+    double currentSpeed_;
+    bool lm1_active_, lm2_active_;
+
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr left_lock_state_sub_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr right_lock_state_sub_;
-    //Publisher for limit switches
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr left_locker_pub_;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr right_locker_pub_;
-    // Call back function
-    void left_state_callback(const std_msgs::msg::Bool::SharedPtr msg){
-        if (msg->data == false) {
-            RCLCPP_INFO(this->get_logger(), "Left limit switch is unlocked");
-            // You can add logic here to lock it if needed
-            lock_limit_switches();  // Lock after unlock is detected
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Left limit switch is locked");
-            unlock_limit_switches(); // Unlock after lock is detected
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr mpv_control_sub_;
+
+    void left_state_callback(const std_msgs::msg::Bool::SharedPtr msg) {
+        lm1_active_ = msg->data;
+        control_stepper();
+    }
+
+    void right_state_callback(const std_msgs::msg::Bool::SharedPtr msg) {
+        lm2_active_ = msg->data;
+        control_stepper();
+    }
+
+    void mpv_control_callback(const std_msgs::msg::String::SharedPtr msg) {
+        std::string info = msg->data;
+        if (info == "LOCKIN") {
+            RCLCPP_INFO(this->get_logger(), "Moving IN");
+            move(IN);
+        } else if (info == "LOCKOUT") {
+            RCLCPP_INFO(this->get_logger(), "Moving OUT");
+            move(OUT);
         }
     }
-    void right_state_callback(const std_msgs::msg::Bool::SharedPtr msg){
-            if (msg->data == false) {
-            RCLCPP_INFO(this->get_logger(), "Right limit switch is unlocked");
-            // You can add logic here to lock it if needed
-            lock_limit_switches();  // Lock after unlock is detected
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Right limit switch is locked");
-            unlock_limit_switches();  // Unlock after lock is detected
+        void move(int direction) {
+        gpioWrite(dirPin_, direction);
+        for (int i = 0; i < stepCount_; i++) {
+            currentSpeed_ = calcSpeed(i);
+            double stepDelayHalf = 0.5 / currentSpeed_;
+            gpioWrite(pulPin_, PI_HIGH);
+            std::this_thread::sleep_for(std::chrono::duration<double>(stepDelayHalf));
+            gpioWrite(pulPin_, PI_LOW);
+            std::this_thread::sleep_for(std::chrono::duration<double>(stepDelayHalf));
         }
+        gpioWrite(dirPin_, PI_LOW);
     }
-    // this function sent a message to both of the locker to unlock their lock 
-    void unlock_limit_switches(){
-        auto unlock_msg = std_msgs::msg::Bool();
-        unlock_msg.data = false; // false mean unlock the Limit Switch
 
-        // Publish to unlock both switch
-        left_locker_pub_->publish(unlock_msg);
-        right_locker_pub_->publish(unlock_msg);
+    double calcSpeed(int currentStep) {
+        int distanceToGo = stepCount_ - currentStep;
+        double requiredSpeed = 0;
 
-        RCLCPP_INFO(this->get_logger(), "Unlock commands sent to both limit switches");
+        if (distanceToGo == 0) {
+            return 0.0;
+        } else {
+            requiredSpeed = std::sqrt(2.0 * distanceToGo * acceleration_);
+        }
+
+        if (requiredSpeed > currentSpeed_) {
+            requiredSpeed = currentSpeed_ == 0 ? std::sqrt(2.0 * acceleration_)
+                                               : currentSpeed_ + std::abs(acceleration_ / currentSpeed_);
+            if (requiredSpeed > maxSpeed_) requiredSpeed = maxSpeed_;
+        } else if (requiredSpeed < currentSpeed_) {
+            requiredSpeed = currentSpeed_ == 0 ? -std::sqrt(2.0 * acceleration_)
+                                               : currentSpeed_ - std::abs(acceleration_ / currentSpeed_);
+            if (requiredSpeed < -maxSpeed_) requiredSpeed = -maxSpeed_;
+        }
+
+        return requiredSpeed;
     }
-    // this function sent a message to both of the locker to lock
-    void lock_limit_switches(){
-        auto lock_msg = std_msgs::msg::Bool();
-        lock_msg.data = true;
 
-        // Publish to lock both switch
-        left_locker_pub_->publish(lock_msg);
-        right_locker_pub_->publish(lock_msg);
-
-        RCLCPP_INFO(this->get_logger(), "Lock commands sent to both limit switches");
+    void control_stepper() {
+        if (lm1_active_ && lm2_active_) {
+            RCLCPP_INFO(this->get_logger(), "Both limit switches active. Moving OUT.");
+            move(OUT);
+        } else if (lm1_active_) {
+            RCLCPP_INFO(this->get_logger(), "Left limit switch active. Moving OUT.");
+            move(OUT);
+        } else if (lm2_active_) {
+            RCLCPP_INFO(this->get_logger(), "Right limit switch active. Moving OUT.");
+            move(OUT);
+        } else {
+            RCLCPP_INFO(this->get_logger(), "No limit switch active. Moving IN.");
+            move(IN);
+        }
     }
 };
 
-int main(int argc, char **argv){
+int main(int argc, char **argv) {
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<LockStepper>();
-    rclcpp::spin(node);
+    auto stepper1 = std::make_shared<LockStepper>(17, 27);
+    auto stepper2 = std::make_shared<LockStepper>(23, 24);
+
+    try {
+        rclcpp::spin(stepper1);
+        rclcpp::spin(stepper2);
+    } catch (const std::exception &e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    }
     rclcpp::shutdown();
     return 0;
 }
