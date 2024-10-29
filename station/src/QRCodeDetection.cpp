@@ -45,7 +45,9 @@ public:
     void enableDisplay(bool en);
 
 private:
-        int midSTN = 0, midMPV = 0, horizontal_bias = 0, vertical_bias = 0; // Calibration data
+    //std::string filePath = "/path/to/calibration_data.txt";
+
+    int midSTN = 0, midMPV = 0, horizontal_bias = 0, vertical_bias = 0; // Calibration data
     bool display_enable = false; // Toggle to show camera feed or not
 
     map<string, string> data_dictionary; // Stores calibration data from a file
@@ -74,8 +76,8 @@ private:
 QRCodeDetection::QRCodeDetection() : Node("qr_code_detection_node"), cap(0) {
     // Read calibration data from the file
     readFile();
-    horizontal_bias = stoi(data_dictionary.at("B1")); // Load horizontal bias
-    vertical_bias = stoi(data_dictionary.at("B2"));   // Load vertical bias
+    horizontal_bias = std::stoi(data_dictionary.at("B1")); // Load horizontal bias
+    vertical_bias = std::stoi(data_dictionary.at("B2"));   // Load vertical bias
 
     // Set camera properties (resolution and format)
     cap.set(CAP_PROP_FRAME_WIDTH, 4608);
@@ -188,6 +190,7 @@ void QRCodeDetection::enableDisplay(bool en) {
 }
 // Write calibration data to the file
 void QRCodeDetection::writeFile(int B1, int B2) {
+    std::ifstream file_in(filePath); // Open the file for reading
     RCLCPP_INFO(this->get_logger(), "Writing to file: B1: %d, B2: %d", B1, B2);
     std::ifstream file_in(filePath); // Open the file for reading
     if (!file_in.is_open()) {
@@ -223,7 +226,7 @@ void QRCodeDetection::writeFile(int B1, int B2) {
 }
 // Read calibration data from the file
 void QRCodeDetection::readFile() {
-    std::ifstream file(filePath);
+    std::ifstream file(filePath);  // Open the file for reading
     if (!file.is_open()) {
         RCLCPP_ERROR(this->get_logger(), "Error: Unable to open file.");
         return;
