@@ -1,6 +1,6 @@
 #include <pigpio.h>                      // Pigpio library for handling GPIO
-#include "rclcpp/rclcpp.hpp"             // ROS2 core library for creating nodes
-#include "std_msgs/msg/bool.hpp"         // Standard ROS2 message type (Boolean)
+#include <rclcpp/rclcpp.hpp>             // ROS2 core library for creating nodes
+#include <std_msgs/msg/bool.hpp>         // Standard ROS2 message type (Boolean)
 
 // Define a class for the LimitSwitch, inheriting from rclcpp::Node
 class LimitSwitch : public rclcpp::Node {
@@ -14,10 +14,9 @@ public:
         // Use gpioSetISRFuncEx to attach ISR for edge detection with user data
         gpioSetISRFuncEx(pin_, edge, 0, LimitSwitch::callback, this);
 
-        pub_limitswitch_ = create_publisher<std_msgs::msg::Bool>("/" + name + "_state", 10);  // Create ROS2 publisher
-        timer_ = create_wall_timer(std::chrono::milliseconds(50), std::bind(&LimitSwitch::publish_state, this));  // Set timer to publish state every 50ms
+        pub_limitswitch_ = this->create_publisher<std_msgs::msg::Bool>("/" + name + "_state", 10);  // Create ROS2 publisher
+        timer_ = this->create_wall_timer(std::chrono::milliseconds(50), std::bind(&LimitSwitch::publish_state, this));  // Set timer to publish state every 50ms
     }
-
     // Destructor cleans up the GPIO pins
     ~LimitSwitch() {
         gpioTerminate();  // Close GPIO
