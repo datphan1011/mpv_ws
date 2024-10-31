@@ -79,7 +79,7 @@ private:
         void move(int direction) {
         gpioWrite(dirPin_, direction);
         for (int i = 0; i < stepCount_; i++) {
-            currentSpeed_ = calcSpeed(i);
+            currentSpeed_ = calculate_speed(i);
             double stepDelayHalf = 0.5 / currentSpeed_;
             gpioWrite(pulPin_, PI_HIGH);
             std::this_thread::sleep_for(std::chrono::duration<double>(stepDelayHalf));
@@ -89,7 +89,7 @@ private:
         gpioWrite(dirPin_, PI_LOW);
     }
 
-    double calcSpeed(int currentStep) {
+    double calculate_speed(int currentStep) {
         int distanceToGo = stepCount_ - currentStep;
         double requiredSpeed = 0;
 
