@@ -38,15 +38,13 @@ private:
             perform_initial_pose_task();    // call the matching function
         }
         else if(last_command_ == "LOCKIN"){
-            // Function will be implement later
-            // perform_lockin_task();
+            perform_lockin_task();     // call the matching function
         }
         else if(last_command_ == "LOCKOUT"){
-            // Function will be implement later
-            // perform_lockout_task();
+            perform_lockout_task(); // call the matching function
         }
         else if(last_command_ == "HEIGHT"){
-            perform_height_task();
+            perform_height_task();  // call the matching function
         }
         else if(last_command_ == "QUIT"){
             RCLCPP_INFO(this->get_logger(), "The station has been shutdown");
@@ -78,13 +76,25 @@ private:
         send_message("INITIAL_POSE");// Send INITIAL_POSE to the /station_control topic
         RCLCPP_INFO(this->get_logger(), "INITIAL_POSE task completed"); // Print out on the console
     }
-    /*Do lockin task
+    // Do lockin task
     void perform_lockin_task(){
-    }*/
+        send_message("LOCKIN_START");  // Command to start lock-in process
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        send_message("LOCKIN_ENGAGE"); // Command to engage lock-in mechanism
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        send_message("LOCKIN_COMPLETE"); // Confirm completion of lock-in
+        RCLCPP_INFO(this->get_logger(), "LOCKIN task completed");
+    }
 
-    /*Do lockout task
+    // Do lock out task
     void perform_lockout_task(){
-    }*/
+        send_message("LOCKOUT_START");  // Command to start lock-out process
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        send_message("LOCKOUT_DISENGAGE"); // Command to disengage lock-out mechanism
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        send_message("LOCKOUT_COMPLETE"); // Confirm completion of lock-out
+        RCLCPP_INFO(this->get_logger(), "LOCKOUT task completed");
+    }
    
     // Do HEIGHT task
     void perform_height_task(){

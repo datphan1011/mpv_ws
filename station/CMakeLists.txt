@@ -26,7 +26,6 @@ include_directories(
 # Find and link Pigpio library
 find_library(PIGPIO_LIB pigpio REQUIRED PATHS /usr/local/lib)
 find_library(PIGPIOD_IF2_LIB pigpiod_if2 REQUIRED PATHS /usr/local/lib)
-
 # Specify the source files for the node
 add_executable(height_sensor_node src/HeightSensorStation.cpp)
 add_executable(server_node src/Server.cpp)
@@ -46,6 +45,7 @@ ament_target_dependencies(limitswitch_station_node rclcpp std_msgs)
 ament_target_dependencies(linear_actuator_node rclcpp std_msgs)
 ament_target_dependencies(lead_screw_node rclcpp std_msgs)
 ament_target_dependencies(qr_code_node rclcpp std_msgs rclcpp std_msgs sensor_msgs cv_bridge image_transport OpenCV)
+
 # Link Pigpio library to the executable
 target_link_libraries(height_sensor_node ${PIGPIO_LIB})
 target_link_libraries(gripper_node ${PIGPIO_LIB})

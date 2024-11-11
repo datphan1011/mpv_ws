@@ -34,6 +34,7 @@ ament_target_dependencies(limit_switch_node rclcpp std_msgs)
 target_link_libraries(height_sensor_mpv_node ${PIGPIO_LIB} ${PIGPIOD_IF2_LIB})
 target_link_libraries(mpv_control_node ${PIGPIO_LIB})
 target_link_libraries(limit_switch_node ${PIGPIO_LIB})
+target_link_libraries(lock_stepper_node ${PIGPIO_LIB})
 
 # Install rule
 INSTALL(TARGETS
