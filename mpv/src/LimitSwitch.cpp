@@ -38,7 +38,7 @@ private:
     // Callback method called when an edge event is detected on the GPIO pin
     static void callback(int /*gpio*/, int /*level*/, uint32_t /*tick*/, void *user_data) {
         auto *object = static_cast<LimitSwitch*>(user_data);
-        object->state_ = obj->getState();
+        object->state_ = object->getState();  // Corrected: changed `obj` to `object`
         object->publish_state();
     }
 
