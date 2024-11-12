@@ -16,6 +16,8 @@
 using namespace std;
 using namespace cv;
 
+#define filePath "myDataFile.text"
+
 // Structure to hold barcode (QR code) data
 struct BarcodeData {
     Point midPoint;           // Midpoint of the detected QR code
