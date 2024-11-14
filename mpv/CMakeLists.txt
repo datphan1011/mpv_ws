@@ -11,6 +11,8 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(my_custom_service REQUIRED)
+#include the include library
+include_directories(include)
 
 # find library
 find_library(PIGPIO_LIB pigpio REQUIRED PATHS /usr/local/lib)
@@ -44,8 +46,12 @@ INSTALL(TARGETS
   lock_stepper_node
   limit_switch_node
 DESTINATION lib/${PROJECT_NAME})
-
+# Install rule for the directory
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}/
 )
+install(DIRECTORY 
+  include/${PROJECT_NAME}/
+DESTINATION include/${PROJECT_NAME})
+
 ament_package()
