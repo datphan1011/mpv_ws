@@ -1,6 +1,10 @@
+//--------------------------------------------
+//Standard library
 #include <pigpio.h>                      // Pigpio library for handling GPIO
 #include <rclcpp/rclcpp.hpp>             // ROS2 core library for creating nodes
 #include <std_msgs/msg/bool.hpp>         // Standard ROS2 message type (Boolean)
+// Include custom header files for sensor initialization and configuration
+#include "mpv/CustomHeader/InitializePigpio.hpp"
 
 // Define a class for the LimitSwitch, inheriting from rclcpp::Node
 class LimitSwitch : public rclcpp::Node {
@@ -8,6 +12,8 @@ public:
     // Constructor that initializes the limit switch, sets up the GPIO pin, and ROS2 publisher
     LimitSwitch(int pin, const std::string &name, int edge, bool inverse = false)
     : Node(name), pin_(pin), state_(false), inverse_(inverse) {
+        initialize_PIGPIO(this->get_logger());
+
         gpioSetMode(pin_, PI_INPUT);     // Set the pin as input mode
         gpioSetPullUpDown(pin_, PI_PUD_UP);  // Enable pull-up resistor on the pin
 
