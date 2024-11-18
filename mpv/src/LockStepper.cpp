@@ -10,6 +10,9 @@
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/string.hpp>
 //--------------------------------------------
+//Include custom library
+
+//--------------------------------------------
 
 class LockStepper : public rclcpp::Node{
 public:
@@ -33,10 +36,7 @@ public:
         lm1_active_ = false;
         lm2_active_ = false;
         // Initialize pigpio
-        if (gpioInitialise() < 0) {
-            RCLCPP_INFO(this->get_logger(), "Failed to initialize pigpio");
-            rclcpp::shutdown();
-        }   
+        initialize_PIGPIO();
         // Set pin
         gpioSetMode(dirPin_, PI_OUTPUT);
         gpioSetMode(pulPin_, PI_OUTPUT);     
@@ -126,6 +126,14 @@ private:
             RCLCPP_INFO(this->get_logger(), "No limit switch active. Moving IN.");
             move(IN);
         }
+    }
+    int initialize_PIGPIO() {
+        if (gpioInitialise() < 0) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio library");
+            return -1;  // Return error code
+        }
+        RCLCPP_INFO(this->get_logger(), "pigpio library initialized successfully");
+        return 0;  // Success
     }
 };
 
