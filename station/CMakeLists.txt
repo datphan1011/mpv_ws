@@ -34,7 +34,7 @@ add_executable(gripper_node src/Gripper.cpp)
 add_executable(limitswitch_station_node src/LimitSwitch.cpp)
 add_executable(linear_actuator_node src/LinearActuator.cpp)
 add_executable(lead_screw_node src/LeadScrew.cpp)
-add_executable(qr_code_node src/QRCodeDetection.cpp)
+# add_executable(qr_code_node src/QRCodeDetection.cpp)
 
 # Link ROS2 libraries to the executable
 ament_target_dependencies(height_sensor_node rclcpp std_msgs std_srvs)
@@ -44,7 +44,7 @@ ament_target_dependencies(gripper_node rclcpp std_msgs)
 ament_target_dependencies(limitswitch_station_node rclcpp std_msgs)
 ament_target_dependencies(linear_actuator_node rclcpp std_msgs)
 ament_target_dependencies(lead_screw_node rclcpp std_msgs)
-ament_target_dependencies(qr_code_node rclcpp std_msgs rclcpp std_msgs sensor_msgs cv_bridge image_transport OpenCV)
+# ament_target_dependencies(qr_code_node rclcpp std_msgs rclcpp std_msgs sensor_msgs cv_bridge image_transport OpenCV)
 
 # Link Pigpio library to the executable
 target_link_libraries(height_sensor_node ${PIGPIO_LIB})
@@ -62,7 +62,7 @@ install(TARGETS
   limitswitch_station_node
   linear_actuator_node
   lead_screw_node
-  qr_code_node
+  # qr_code_node
 DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch

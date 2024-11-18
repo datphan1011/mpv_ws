@@ -1,3 +1,4 @@
+# Ignore all other files
 *.com
 *.class
 *.dll
@@ -5,6 +6,17 @@
 *.o
 *.so
 *.log
+
+# Build and install directories
 build/
 install/
-include/
+
+# Ignore everything in the include directory for mpv and station
+mpv/include/*
+station/include/*
+
+# Don't ignore the CustomHeader file directory in mpv
+!mpv/include/mpv/CustomHeader/
+
+# Allow everything within the CustomHeader directory in mpv
+!mpv/include/mpv/CustomHeader/**
