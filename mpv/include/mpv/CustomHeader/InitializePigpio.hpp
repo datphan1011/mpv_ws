@@ -1,4 +1,4 @@
-// pigpio_initializer.hpp
+// Pigpio_initialise_mpv.hpp
 
 #ifndef PIGPIO_INITIALIZER_HPP
 #define PIGPIO_INITIALIZER_HPP
