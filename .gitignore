@@ -12,11 +12,16 @@ build/
 install/
 
 # Ignore everything in the include directory for mpv and station
-mpv/include/*
-station/include/*
+station/include/Adafruit_BusIO-master/
+station/include/Adafruit_VL53L0X-master/
+station/include/Adafruit-PWM-Servo-Driver-Library-master/
+station/include/ArduinoCore-avr-master/
+station/include/pigpio/
+mpv/include/pigpio/
 
 # Don't ignore the CustomHeader file directory in mpv
 !mpv/include/mpv/CustomHeader/
-
+!station/include/station/CustomHeader
 # Allow everything within the CustomHeader directory in mpv
 !mpv/include/mpv/CustomHeader/**
+!station/include/station/CustomHeader/**

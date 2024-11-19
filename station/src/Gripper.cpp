@@ -6,6 +6,8 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <rclcpp/rclcpp.hpp>
+// Custom header files
+#include "station/CustomHeader/InitialisePIGPIOStation.hpp"
 
 // I2C address and WiringPi pin definitions
 #define PCA9685_ADDR 0x40
@@ -35,10 +37,7 @@ public:
         );
 
         // Initialize pigpio
-        if (gpioInitialise() < 0) {
-            RCLCPP_INFO(this->get_logger(), "Failed to initialize pigpio");
-            rclcpp::shutdown();
-        }
+        initialize_PIGPIO_station(this->get_logger());
 
         // Initialize I2C communication with the PCA9685
         pca9685_fd_ = i2cOpen(1, PCA9685_ADDR, 0);

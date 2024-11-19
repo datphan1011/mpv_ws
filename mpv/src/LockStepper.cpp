@@ -11,7 +11,7 @@
 #include <std_msgs/msg/string.hpp>
 //--------------------------------------------
 //Include custom library
-
+#include "mpv/CustomHeader/InitializePigpio.hpp"
 //--------------------------------------------
 
 class LockStepper : public rclcpp::Node{
@@ -36,7 +36,7 @@ public:
         lm1_active_ = false;
         lm2_active_ = false;
         // Initialize pigpio
-        initialize_PIGPIO();
+        initialize_PIGPIO(this->get_logger());
         // Set pin
         gpioSetMode(dirPin_, PI_OUTPUT);
         gpioSetMode(pulPin_, PI_OUTPUT);     
@@ -127,14 +127,14 @@ private:
             move(IN);
         }
     }
-    int initialize_PIGPIO() {
-        if (gpioInitialise() < 0) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio library");
-            return -1;  // Return error code
-        }
-        RCLCPP_INFO(this->get_logger(), "pigpio library initialized successfully");
-        return 0;  // Success
-    }
+    // int initialize_PIGPIO() {
+    //     if (gpioInitialise() < 0) {
+    //         RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio library");
+    //         return -1;  // Return error code
+    //     }
+    //     RCLCPP_INFO(this->get_logger(), "pigpio library initialized successfully");
+    //     return 0;  // Success
+    // }
 };
 
 int main(int argc, char **argv) {

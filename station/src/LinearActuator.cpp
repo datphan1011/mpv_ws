@@ -6,7 +6,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/int32.hpp>
-
+// Custom Header file
+#include "station/CustomHeader/InitialisePIGPIOStation.hpp"
 class LinearActuator : public rclcpp::Node{
 public:
     LinearActuator(int left_up_act_pin, int left_down_act_pin, int right_up_act_pin, int right_down_act_pin) 
@@ -28,7 +29,7 @@ public:
         station_control_sub_ = this->create_subscription<std_msgs::msg::String>(
         "station_control", 10,std::bind(&LinearActuator::station_control_callback, this, std::placeholders::_1));
         // Initialize Pigpio library
-        initialize_PIGPIO();
+        initialize_PIGPIO_station(this->get_logger());
         // Setting up mode
         gpioSetMode(left_up_act_pin, PI_OUTPUT);
         gpioSetMode(left_down_act_pin, PI_OUTPUT);
@@ -142,14 +143,6 @@ private:
     }
     void station_right_sensor_callback(const std_msgs::msg::Int32::SharedPtr msg){
         station_right_sensor_data = msg->data;
-    }
-    int initialize_PIGPIO() {
-        if (gpioInitialise() < 0) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio library");
-            return -1;  // Return error code
-        }
-        RCLCPP_INFO(this->get_logger(), "pigpio library initialized successfully");
-        return 0;  // Success
     }
 };
 int main(int argc, char **argv){
