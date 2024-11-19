@@ -6,6 +6,8 @@
 #include <std_msgs/msg/int32.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/string.hpp>
+// Custom Header file
+#include "station/CustomHeader/InitialisePIGPIOStation.hpp"
 
 class LeadScrew : public rclcpp :: Node{
 public:
@@ -15,7 +17,7 @@ public:
         // Create step_count publisher
         step_count_publisher_ = this->create_publisher<std_msgs::msg::Int32>("step_count", 10);
         // Initialize the Pigpio
-        initialize_PIGPIO();
+        initialize_PIGPIO(this->get_logger())        
         // Setting up mode
         gpioSetMode(direction_pin_, PI_OUTPUT);
         gpioSetMode(pulse_pin_, PI_OUTPUT);
@@ -46,15 +48,7 @@ private:
     bool is_moving_;
     // ROS2 node
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr step_count_publisher_;
-    // Function to initalize the GPIO
-    int initialize_PIGPIO() {
-        if (gpioInitialise() < 0) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio library");
-            return -1;  // Return error code
-        }
-        RCLCPP_INFO(this->get_logger(), "pigpio library initialized successfully");
-        return 0;  // Success
-    }
+
     // Function for Lead Screw
     void stop(){
         is_moving_ = false;
