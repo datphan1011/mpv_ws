@@ -24,9 +24,9 @@ public:
 
         // Subscriptions to left and right height sensors
         left_height_sensor_sub_ = this->create_subscription<std_msgs::msg::Int32>(
-            "left_height_sensor", 10, std::bind(&Client::left_height_sensor_callback, this, std::placeholders::_1));
+            "left_height_sensor_mpv", 10, std::bind(&Client::left_height_sensor_callback, this, std::placeholders::_1));
         right_height_sensor_sub_ = this->create_subscription<std_msgs::msg::Int32>(
-            "right_height_sensor", 10, std::bind(&Client::right_height_sensor_callback, this, std::placeholders::_1));
+            "right_height_sensor_mpv", 10, std::bind(&Client::right_height_sensor_callback, this, std::placeholders::_1));
 
         // Initial values for command and sensor data
         last_command_ = "";
