@@ -18,7 +18,7 @@ public:
         // Create a timer for the publisher to publish the signal 
         limitswitch_timer_ = this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&LimitSwitch::timer_callback, this));
         // Initialize the pigpio library
-        initialize_PIGPIO(this->get_logger());
+        initialize_PIGPIO_station(this->get_logger());
         // Initialize GPIO pins
         gpioSetMode(limitswitch_pin_start_, PI_INPUT);
         gpioSetMode(limitswitch_pin_end_, PI_INPUT);

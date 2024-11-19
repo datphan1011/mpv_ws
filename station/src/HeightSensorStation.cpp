@@ -8,6 +8,7 @@
 #include <pigpio.h>             // Pigpio for GPIO control
 // Custom header file
 #include <station/CustomHeader/InitialisePIGPIOStation.hpp>
+#include <mpv/CustomHeader/HeightSensorConfiguration.hpp>
 class HeightSensorStation : public rclcpp::Node{
 public:
     HeightSensorStation() : Node("height_sensor_node_station"){
@@ -17,7 +18,7 @@ public:
         height_sensor_timer_=this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&HeightSensorStation::timer_callback, this));
 
         // Initialize pigpio
-        initialize_PIGPIO(this->get_logger());
+        initialize_PIGPIO_station(this->get_logger());
         // Left and right sensor pin
         left_sensor_shudown_pin = 23; // GPIO23
         right_sensor_shudown_pin = 24; // GPIO24

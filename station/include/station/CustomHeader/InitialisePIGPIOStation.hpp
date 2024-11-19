@@ -6,7 +6,7 @@
 #include <pigpio.h>
 #include <rclcpp/rclcpp.hpp>
 
-int initialize_PIGPIO(const rclcpp::Logger &logger) {
+int initialize_PIGPIO_station(const rclcpp::Logger &logger) {
     if (gpioInitialise() < 0) {
         RCLCPP_ERROR(logger, "Failed to initialize pigpio library");
         return -1;  // Return error code

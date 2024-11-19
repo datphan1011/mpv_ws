@@ -29,7 +29,7 @@ public:
         station_control_sub_ = this->create_subscription<std_msgs::msg::String>(
         "station_control", 10,std::bind(&LinearActuator::station_control_callback, this, std::placeholders::_1));
         // Initialize Pigpio library
-        initialize_PIGPIO(this->get_logger());
+        initialize_PIGPIO_station(this->get_logger());
         // Setting up mode
         gpioSetMode(left_up_act_pin, PI_OUTPUT);
         gpioSetMode(left_down_act_pin, PI_OUTPUT);

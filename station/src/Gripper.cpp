@@ -37,7 +37,7 @@ public:
         );
 
         // Initialize pigpio
-        initialize_PIGPIO(this->get_logger());
+        initialize_PIGPIO_station(this->get_logger());
 
         // Initialize I2C communication with the PCA9685
         pca9685_fd_ = i2cOpen(1, PCA9685_ADDR, 0);
