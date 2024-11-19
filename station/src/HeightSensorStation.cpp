@@ -1,12 +1,13 @@
-#include "rclcpp/rclcpp.hpp"    // ROS2 C++ client library
-#include "std_msgs/msg/int32.hpp"  // ROS2 message type
+#include <rclcpp/rclcpp.hpp>    // ROS2 C++ client library
+#include <std_msgs/msg/int32.hpp>  // ROS2 message type
 // #include "wiringPiI2C.h"        // WiringPi for I2C communication
 // #include <wiringPi.h>           // WiringPi for GPIO control
 #include <chrono>               // For time handling
 #include <memory>               // For smart pointers
 #include <iostream>             // Standard cpp library
 #include <pigpio.h>             // Pigpio for GPIO control
-
+// Custom header file
+#include <station/CustomHeader/InitialisePIGPIOStation.hpp>
 class HeightSensorStation : public rclcpp::Node{
 public:
     HeightSensorStation() : Node("height_sensor_node_station"){
@@ -16,10 +17,7 @@ public:
         height_sensor_timer_=this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&HeightSensorStation::timer_callback, this));
 
         // Initialize pigpio
-        if (gpioInitialise() < 0) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to initialize pigpio");
-            rclcpp::shutdown();
-        }
+        initialize_PIGPIO(this->get_logger());
         // Left and right sensor pin
         left_sensor_shudown_pin = 23; // GPIO23
         right_sensor_shudown_pin = 24; // GPIO24

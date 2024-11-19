@@ -17,7 +17,7 @@ public:
         // Create step_count publisher
         step_count_publisher_ = this->create_publisher<std_msgs::msg::Int32>("step_count", 10);
         // Initialize the Pigpio
-        initialize_PIGPIO(this->get_logger())        
+        initialize_PIGPIO(this->get_logger());       
         // Setting up mode
         gpioSetMode(direction_pin_, PI_OUTPUT);
         gpioSetMode(pulse_pin_, PI_OUTPUT);
