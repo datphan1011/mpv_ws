@@ -23,6 +23,9 @@ include_directories(
   # ${CMAKE_SOURCE_DIR}/include/ArduinoCore-avr-master
   # ${CMAKE_SOURCE_DIR}/include/pigpio
 )
+#include the include library
+include_directories(include)
+
 # Find and link Pigpio library
 find_library(PIGPIO_LIB pigpio REQUIRED PATHS /usr/local/lib)
 find_library(PIGPIOD_IF2_LIB pigpiod_if2 REQUIRED PATHS /usr/local/lib)
@@ -65,7 +68,13 @@ install(TARGETS
   # qr_code_node
 DESTINATION lib/${PROJECT_NAME})
 
+# Install rule for launch
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}/
 )
+# Install rule for include 
+install(DIRECTORY 
+  include/${PROJECT_NAME}/
+DESTINATION include/${PROJECT_NAME})
+
 ament_package()
