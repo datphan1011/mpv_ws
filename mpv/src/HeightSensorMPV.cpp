@@ -20,8 +20,8 @@ public:
           height_sensor_config_(5, 6, logger_) { // Initialize HeightSensorConfiguration with GPIO pins 5 and 6, and logger, pin can be changed
           
         // Create publishers for the left and right sensor data
-        left_sensor_publisher_ = this->create_publisher<std_msgs::msg::Int32>("left_height_sensor", 10);
-        right_sensor_publisher_ = this->create_publisher<std_msgs::msg::Int32>("right_height_sensor", 10);
+        left_sensor_publisher_ = this->create_publisher<std_msgs::msg::Int32>("left_height_sensor_mpv", 10);
+        right_sensor_publisher_ = this->create_publisher<std_msgs::msg::Int32>("right_height_sensor_mpv", 10);
         
         // Create a timer to call the `timer_callback` function every 100 milliseconds
         height_sensor_timer_ = this->create_wall_timer(
