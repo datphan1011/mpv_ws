@@ -16,7 +16,7 @@
 using namespace std;
 using namespace cv;
 
-#define filePath "myDataFile.text"
+#define filePath "mpv_ws/src/station/src/myDataFile.txt" // Absolute Path
 
 // Structure to hold barcode (QR code) data
 struct BarcodeData {
@@ -194,7 +194,6 @@ void QRCodeDetection::enableDisplay(bool en) {
 void QRCodeDetection::writeFile(int B1, int B2) {
     std::ifstream file_in(filePath); // Open the file for reading
     RCLCPP_INFO(this->get_logger(), "Writing to file: B1: %d, B2: %d", B1, B2);
-    std::ifstream file_in(filePath); // Open the file for reading
     if (!file_in.is_open()) {
         RCLCPP_ERROR(this->get_logger(), "Error: Unable to open file for reading.");
         return;
