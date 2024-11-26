@@ -8,120 +8,66 @@
 #include <pigpio.h>             // Pigpio for GPIO control
 // Custom header file
 #include <station/CustomHeader/InitialisePIGPIOStation.hpp>
-#include <mpv/CustomHeader/HeightSensorConfiguration.hpp>
+#include <station/CustomHeader/HeightSensorConfiguration.hpp>
+
 class HeightSensorStation : public rclcpp::Node{
 public:
-    HeightSensorStation() : Node("height_sensor_node_station"){
+    HeightSensorStation()
+        : Node("height_sensor_node_station"),  // Initialize the ROS2 node with the name "height_sensor_node_mpv"
+          logger_(this->get_logger()),     // Initialize logger from the ROS2 Node's logger
+          height_sensor_config_(23, 24, logger_) { // Initialize HeightSensorConfiguration with GPIO pins 23 and 24 and logger, pin can be changed
+        
         // Initialize the left and right sensor publisher
-        left_sensor_publisher_=this->create_publisher<std_msgs::msg::Int32>("left_sensor_station", 10);
-        right_sensor_publisher_=this->create_publisher<std_msgs::msg::Int32>("right_sensor_station", 10);
-        height_sensor_timer_=this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&HeightSensorStation::timer_callback, this));
-
+        left_sensor_publisher_station_=this->create_publisher<std_msgs::msg::Int32>("left_sensor_station", 10);
+        right_sensor_publisher_station_=this->create_publisher<std_msgs::msg::Int32>("right_sensor_station", 10);
+        // Create a timer to call the `timer_callback` function every 100 milliseconds
+        height_sensor_timer_station_ = this->create_wall_timer(
+            std::chrono::milliseconds(100), // 100ms timer interval
+            std::bind(&HeightSensorStation::timer_callback, this)  // Bind the timer callback function
+        );
         // Initialize pigpio
         initialize_PIGPIO_station(this->get_logger());
-        // Left and right sensor pin
-        left_sensor_shudown_pin = 23; // GPIO23
-        right_sensor_shudown_pin = 24; // GPIO24
-        // Configure GPIO as an output
-        gpioSetMode(left_sensor_shudown_pin, PI_OUTPUT);  
-        gpioSetMode(right_sensor_shudown_pin, PI_OUTPUT);
-
-        // Turn off both sensors by setting the pin to LOW
-        gpioWrite(left_sensor_shudown_pin, PI_LOW);   
-        gpioWrite(right_sensor_shudown_pin, PI_LOW);
-        usleep(100000); // 100 ms
-            
-        // Initialize first sensor
-        gpioWrite(left_sensor_shudown_pin, PI_HIGH);
-        usleep(100000); // 100 ms
-        vl53l0x_1_fd_ = i2cOpen(1, 0x29, 0); // Default I2C address before changing
-
-        if (vl53l0x_1_fd_ == -1)
-        {
-            RCLCPP_ERROR(this->get_logger(), "Failed to initialize sensor 1");
+        // Initialize sensors for the left and right height sensors (I2C initialization)
+        vl53l0x_1_fd_ = height_sensor_config_.initialize_sensor(height_sensor_config_.get_left_pin(), 0x30); // Left sensor, I2C address 0x30
+        vl53l0x_2_fd_ = height_sensor_config_.initialize_sensor(height_sensor_config_.get_right_pin(), 0x31); // Right sensor, I2C address 0x31
+        // Set timing budgets for both sensors (300ms in this case)
+        height_sensor_config_.set_timing_budget(vl53l0x_1_fd_, 300000); // Set timing budget for left sensor
+        height_sensor_config_.set_timing_budget(vl53l0x_2_fd_, 300000); // Set timing budget for right sensor
         }
-        // Change the I2C address to 0x30 for the first sensor
-        i2cWriteByteData(vl53l0x_1_fd_, 0x00, 0x30);
-
-        // Initialize second sensor
-        gpioWrite(right_sensor_shudown_pin, PI_HIGH);
-        usleep(100000); // 100 ms
-        vl53l0x_2_fd_ = i2cOpen(1, 0x30, 0); // Default I2C address
-        if (vl53l0x_2_fd_ == -1)
-        {
-            RCLCPP_ERROR(this->get_logger(), "Failed to initialize sensor 2");
-        }
-        // Change the I2C address to 0x31 for the second sensor
-        i2cWriteByteData(vl53l0x_2_fd_ , 0x00, 0x31);
-
-        // Set measurement timing budget for both sensors
-        set_timing_budget(vl53l0x_1_fd_, 300000);
-        set_timing_budget(vl53l0x_2_fd_, 300000);
-        }
-    ~HeightSensorStation(){
-        // Close I2C handles and terminate pigpio
-        i2cClose(vl53l0x_1_fd_);
-        i2cClose(vl53l0x_2_fd_);
-        gpioTerminate();
+    // Deconstructor 
+    ~HeightSensorStation() {
+        i2cClose(vl53l0x_1_fd_); // Close the I2C connection for left sensor
+        i2cClose(vl53l0x_2_fd_); // Close the I2C connection for right sensor
     }
 
 private:
     //Class member variables
-    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr left_sensor_publisher_;
-    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr right_sensor_publisher_;
-    rclcpp::TimerBase::SharedPtr height_sensor_timer_;
+    rclcpp::Logger logger_;  // Logger to log messages within the node
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr left_sensor_publisher_station_;  // Publisher for left sensor data
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr right_sensor_publisher_station_; // Publisher for right sensor data
+    rclcpp::TimerBase::SharedPtr height_sensor_timer_station_; // Timer to call the callback function periodically
         
-    int left_sensor_shudown_pin;
-    int right_sensor_shudown_pin;
+// Sensor configuration and file descriptors
+    HeightSensorConfiguration height_sensor_config_; // The configuration for the height sensors (handles GPIO, I2C, etc.)
+    int vl53l0x_1_fd_; // File descriptor for the left sensor (VL53L0X)
+    int vl53l0x_2_fd_; // File descriptor for the right sensor (VL53L0X)
 
-    int vl53l0x_1_fd_; // File descriptor for the left sensor
-    int vl53l0x_2_fd_; // File descriptor for the right sensor
-    void timer_callback()
-    {
-        //create 2 message that hold the data
-        auto msg_1 = std::make_shared<std_msgs::msg::Int32>(); 
+// Timer callback function to periodically fetch sensor data and publish it
+    void timer_callback() {
+        // Create messages to hold sensor data
+        auto msg_1 = std::make_shared<std_msgs::msg::Int32>();
         auto msg_2 = std::make_shared<std_msgs::msg::Int32>();
-        //create a variable that call the function
-        int left_sensor_range = get_sensor_range(vl53l0x_1_fd_);
-        int right_sensor_range = get_sensor_range(vl53l0x_2_fd_);
-        //adding the data of the function into the left sensor and publish it
-        msg_1->data = left_sensor_range;
-        left_sensor_publisher_->publish(*msg_1);
-        //adding the data of the function into the right sensor and publish it
-        msg_2->data = right_sensor_range;
-        right_sensor_publisher_->publish(*msg_2);
-        // Print the data into the console so I can check it
-        RCLCPP_INFO(this->get_logger(), "The data of the left sensor:  %d", left_sensor_range);
-        RCLCPP_INFO(this->get_logger(), "The data of the right sensor: %d", right_sensor_range);
-    }
 
-    int get_sensor_range(int sensor_fd)
-    {
-        // VL53L0X register to read the range data (usually in millimeters)
-        const int RESULT_RANGE_STATUS = 0x14;  // Example register for range
-        int range = i2cReadWordData(sensor_fd, RESULT_RANGE_STATUS);
-            
-        if (range == -1) {
-            RCLCPP_ERROR(rclcpp::get_logger("VL53L0XNode"), "Failed to read range from sensor");
-        }
-        return range;
-    }
-    /*sets the "timing budget" for the VL53L0X time-of-flight (ToF) sensor. In the VL53L0X sensor,
-    the timing budget represents how much time the sensor spends measuring distances for each ranging operation (in microseconds). 
-    A longer timing budget generally results in more accurate measurements, but it also makes the sensor slower.*/
-    void set_timing_budget(int sensor_fd_, uint32_t budget)
-    {
-        // Timing budget register addresses, This internal register can be access directly via I2C without VL53L0X library
-        const int FINAL_RANGE_CONFIG_TIMEOUT_MACROP_HI = 0x71; //change it back base on the datasheet
-        const int FINAL_RANGE_CONFIG_TIMEOUT_MACROP_LO = 0x72; //change it back base on the datasheet
+        // Fetch sensor data for both sensors
+        msg_1->data = height_sensor_config_.get_sensor_range(vl53l0x_1_fd_); // Get range from left sensor
+        msg_2->data = height_sensor_config_.get_sensor_range(vl53l0x_2_fd_); // Get range from right sensor
 
-        // Convert the budget (in microseconds) to register values
-        // Formula based on VL53L0X datasheet
-        uint16_t budget_reg_value = (budget / 2) - 15;
-        // High byte: (budget_reg_value >> 8) & 0xFF shifts the 16-bit value 8 bits to the right and extracts the upper byte.
-        i2cWriteByteData(sensor_fd_, FINAL_RANGE_CONFIG_TIMEOUT_MACROP_HI, (budget_reg_value >> 8) & 0xFF);
-        // Low byte: budget_reg_value & 0xFF extracts the lower byte.
-        i2cWriteByteData(sensor_fd_, FINAL_RANGE_CONFIG_TIMEOUT_MACROP_LO, budget_reg_value & 0xFF);
+        // Publish the sensor data
+        left_sensor_publisher_station_->publish(*msg_1); // Publish left sensor data
+        right_sensor_publisher_station_->publish(*msg_2); // Publish right sensor data
+
+        // Log the sensor values
+        RCLCPP_INFO(this->get_logger(), "Left sensor (MPV): %d, Right sensor (MPV): %d", msg_1->data, msg_2->data);
     }
 };
 

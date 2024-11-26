@@ -50,7 +50,7 @@ private:
         pub_left_sensor_->publish(msg_left_sensor_data);
         pub_right_sensor_->publish(msg_right_sensor_data);
 
-        RCLCPP_INFO(this->get_logger(), "Response and sensor data sent to client.");
+        RCLCPP_INFO(this->get_logger(), "Response and sensor data sent back to client.");
     }
 };
 
