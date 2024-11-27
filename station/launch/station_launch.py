@@ -40,9 +40,9 @@ def generate_launch_description():
             executable = 'linear_actuator_node',
             name = 'LinearActuator',
         ),
-        # Node(
-        #     package = 'station',
-        #     executable = 'qr_code_node',
-        #     name = 'QRCodeDetection',
-        # ),
+        Node(
+            package = 'station',
+            executable = 'qr_code_node',
+            name = 'QRCodeDetection',
+        ),
     ])
