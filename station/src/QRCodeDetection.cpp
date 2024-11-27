@@ -103,6 +103,15 @@ QRCodeDetection::QRCodeDetection() : Node("qr_code_detection_node"), cap(0) {
 QRCodeDetection::~QRCodeDetection() {
     cap.release(); // Release the camera resource when the node shuts down
 }
+// Define the processFrame function
+void QRCodeDetection::processFrame(const Mat &frame) {
+    // Currently, no additional processing is implemented for the frame.
+    if (display_enable) {
+        // If display is enabled, show the frame in a window.
+        imshow("Camera Feed", frame);
+        waitKey(1); // Necessary for the display window to refresh.
+    }
+}
 
 // Main loop for the measurement process, continuously captures frames and detects QR codes
 void QRCodeDetection::measure() {
