@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <rclcpp/rclcpp.hpp>
 #include <pigpio.h>
+#include <unistd.h>
 #include "mpv/CustomHeader/InitializePigpio.hpp" // Include your new initializer header
 
 class HeightSensorConfiguration {
