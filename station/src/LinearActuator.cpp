@@ -94,7 +94,7 @@ public:
         */
     }
     ~LinearActuator() {
-        gpioTerminate();  // Terminate pigpio on destruction
+        gpioTerminate();  // Terminate pigpio on deconstructor
     }
 private:
     // Class member variables and parameters
